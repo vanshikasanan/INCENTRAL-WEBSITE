@@ -17,7 +17,9 @@ export function constructMetadata({
   image = siteConfig.ogImage,
   noIndex = false,
 }: ConstructMetadataProps = {}): Metadata {
-  const pageTitle = title ? `${title} | ${siteConfig.name}` : siteConfig.name;
+  const pageTitle = title
+    ? `${title} | ${siteConfig.name}`
+    : `${siteConfig.brandName} | Fleet Tracking & Intelligence`;
   const url = new URL(path, siteConfig.url).toString();
   const imageUrl = image.startsWith("http")
     ? image
@@ -32,11 +34,11 @@ export function constructMetadata({
     },
     openGraph: {
       type: "website",
-      locale: "en_US",
+      locale: siteConfig.locale.replace("_", "-"),
       url,
       title: pageTitle,
       description,
-      siteName: siteConfig.name,
+      siteName: siteConfig.brandName,
       images: [
         {
           url: imageUrl,
@@ -54,6 +56,16 @@ export function constructMetadata({
     },
     robots: noIndex
       ? { index: false, follow: false }
-      : { index: true, follow: true },
+      : {
+          index: true,
+          follow: true,
+          googleBot: {
+            index: true,
+            follow: true,
+            "max-image-preview": "large",
+            "max-snippet": -1,
+            "max-video-preview": -1,
+          },
+        },
   };
 }

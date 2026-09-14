@@ -4,22 +4,17 @@ import { siteConfig } from "@/config/site";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: siteConfig.name,
+    name: siteConfig.brandName,
     short_name: siteConfig.name,
     description: siteConfig.description,
     start_url: "/",
     display: "standalone",
     background_color: "#ffffff",
-    theme_color: "#171717",
+    theme_color: "#0565cf",
     icons: [
       {
-        src: "/icon",
-        sizes: "32x32",
-        type: "image/png",
-      },
-      {
-        src: "/apple-icon",
-        sizes: "180x180",
+        src: siteConfig.assets.favicon,
+        sizes: "64x64",
         type: "image/png",
       },
     ],
