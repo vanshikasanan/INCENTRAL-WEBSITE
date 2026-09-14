@@ -8,6 +8,7 @@ Production-ready Next.js starter with shadcn/ui, Tailwind CSS, and SEO defaults.
 - **UI:** shadcn/ui (base-nova) + Tailwind CSS v4
 - **Language:** TypeScript
 - **Icons:** Lucide React
+- **HTTP Client:** Axios
 
 ## Getting started
 
@@ -28,8 +29,10 @@ src/
 │   ├── layout/       # Header, footer, container, mobile nav
 │   ├── seo/          # JSON-LD structured data
 │   └── ui/           # shadcn/ui components
-├── config/           # Site config and navigation
-└── lib/              # Shared utilities (metadata helpers)
+├── config/           # Site config, env, and navigation
+└── lib/
+    ├── api/          # Axios client, errors, typed helpers
+    └── metadata.ts   # SEO metadata helpers
 ```
 
 ## SEO
@@ -39,6 +42,31 @@ src/
 - Open Graph and Twitter card tags
 - JSON-LD organization schema on the root layout
 - Set `NEXT_PUBLIC_SITE_URL` in `.env.local` for production
+
+## API (Axios)
+
+Pre-configured axios client at `src/lib/api/` with interceptors and typed helpers.
+
+```ts
+import { apiGet, apiPost, ApiError } from "@/lib/api";
+
+// GET request
+const users = await apiGet<User[]>("/users");
+
+// POST request
+const created = await apiPost<User, CreateUserDto>("/users", { name: "Jane" });
+
+// Error handling
+try {
+  await apiGet("/protected");
+} catch (error) {
+  if (error instanceof ApiError) {
+    console.error(error.status, error.message);
+  }
+}
+```
+
+Set `NEXT_PUBLIC_API_URL` in `.env.local` to point at your backend.
 
 ## Adding UI components
 

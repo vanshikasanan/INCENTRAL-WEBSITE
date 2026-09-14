@@ -1,8 +1,10 @@
+import { env } from "@/config/env";
+
 export const siteConfig = {
   name: "Incentral",
   description:
     "Modern digital solutions built for performance, accessibility, and growth.",
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://incentral.com",
+  url: env.siteUrl,
   ogImage: "/og.jpg",
   links: {
     twitter: "https://twitter.com/incentral",
