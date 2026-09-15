@@ -240,6 +240,10 @@
     animation: inc-not-found-status 2.8s ease-in-out infinite;
   }
 
+  .inc-not-found-pin {
+    animation: inc-not-found-pin-pulse 2.8s ease-in-out infinite;
+  }
+
   @keyframes inc-not-found-breathe {
     0%,
     100% {
@@ -317,6 +321,18 @@
     }
   }
 
+  @keyframes inc-not-found-pin-pulse {
+    0%,
+    100% {
+      box-shadow: 0 8px 22px rgba(8, 37, 56, 0.22);
+    }
+    50% {
+      box-shadow:
+        0 8px 22px rgba(8, 37, 56, 0.22),
+        0 0 0 10px rgba(5, 101, 207, 0.12);
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .inc-not-found-brand,
     .inc-not-found-glow,
@@ -325,7 +341,8 @@
     .inc-not-found-dot,
     .inc-not-found-progress,
     .inc-not-found-route,
-    .inc-not-found-status {
+    .inc-not-found-status,
+    .inc-not-found-pin {
       animation: none !important;
     }
   }

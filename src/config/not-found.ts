@@ -1,7 +1,6 @@
 export const notFoundPage = {
   code: "404 · Page not found",
-  title: "This page isn't available yet.",
-  lead: "The route you requested doesn't exist, or this part of InCentral is still being built. We're rolling out pages in stages — check back soon.",
+  title: "We could not find this page.",
   devStatus: {
     label: "Development in progress",
     hint: "New routes and features are being added to InCentral.",
@@ -15,7 +14,11 @@ export const notFoundPage = {
     links: [
       { label: "Plans", href: "/#plans" },
       { label: "Help", href: "/help" },
-      { label: "AIS-140 Guide", href: "/ais-140-guide" },
+      { label: "Support", href: "/support" },
     ],
+  },
+  visual: {
+    image: "/images/hero/hero-ingenious-concept.webp",
+    note: "Useful links",
   },
 } as const;
