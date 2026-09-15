@@ -1,4 +1,5 @@
 import { HeroSection, ProofSection } from "@/components/home";
+import { PlanFinderSection } from "@/components/plan-finder";
 import { PlansSection } from "@/components/plans";
 import { plansSectionHome } from "@/config/plans";
 import { proofSectionHome } from "@/config/proof";
@@ -17,6 +18,7 @@ export default function HomePage() {
         description={plans.description}
         cards={plans.cards}
       />
+      <PlanFinderSection />
       <ProofSection {...proofSectionHome} />
     </main>
   );
