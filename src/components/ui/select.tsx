@@ -47,6 +47,8 @@ function SelectTrigger({
     >
       {children}
       <SelectPrimitive.Icon
+        data-slot="select-icon"
+        className="flex shrink-0 items-center justify-center bg-transparent p-0"
         render={
           <ChevronDownIcon className="pointer-events-none size-4 text-muted-foreground" />
         }

@@ -3,7 +3,7 @@ import type { MetadataRoute } from "next";
 import { siteConfig } from "@/config/site";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const pages = ["/", "/ais-140-guide", "/help"] as const;
+  const pages = ["/", "/ais-140-guide", "/help", "/support"] as const;
 
   return pages.map((path, index) => ({
     url: new URL(path, siteConfig.url).toString(),
