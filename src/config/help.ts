@@ -80,7 +80,7 @@ export const helpPage = {
         icon: "installation",
         title: "Installation",
         description: "See how your device can be installed.",
-        href: "/help#installation-help",
+        href: "/help/installation-help",
         searchText:
           "install installation fitment self install Intangles camera DriveAI certification",
       },
@@ -89,7 +89,7 @@ export const helpPage = {
         icon: "orders",
         title: "Orders & payment",
         description: "Understand cart, checkout and order status.",
-        href: "/help#orders-help",
+        href: "/help/orders-help",
         searchText:
           "order orders pricing payment gst shipping cart checkout quote buy purchase invoice",
       },
@@ -98,7 +98,7 @@ export const helpPage = {
         icon: "account",
         title: "Account & InRoute",
         description: "Sign in, create an account or check InRoute access.",
-        href: "/help#account-help",
+        href: "/help/account-help",
         searchText:
           "account sign in login create account my incentral inroute access provisioning",
       },
@@ -107,7 +107,7 @@ export const helpPage = {
         icon: "warranty",
         title: "Warranty & support",
         description: "Check warranty basics or contact Support.",
-        href: "/help#warranty-support",
+        href: "/help/warranty-support",
         searchText:
           "warranty support replacement hardware issue device help case service 3 year",
       },

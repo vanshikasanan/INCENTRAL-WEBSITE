@@ -59,7 +59,7 @@ export function PlanCard({ card, className }: PlanCardProps) {
           </p>
         </div>
 
-        <ul className="m-0 mt-3.5 mb-0.5 grid list-none gap-[9px] p-0">
+        <ul className="m-0 mt-3.5 grid list-none gap-[9px] p-0">
           {card.features.map((feature) => (
             <li
               key={feature.label}
@@ -70,6 +70,12 @@ export function PlanCard({ card, className }: PlanCardProps) {
             </li>
           ))}
         </ul>
+
+        {card.href ? (
+          <p className="mt-4 mb-0 text-[13px] font-semibold text-[var(--accent)]">
+            View plan →
+          </p>
+        ) : null}
       </div>
     </article>
   );

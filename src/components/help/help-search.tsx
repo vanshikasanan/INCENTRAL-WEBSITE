@@ -13,6 +13,7 @@ import {
 } from "react";
 
 import { helpPage } from "@/config/help";
+import { helpFaqHref } from "@/lib/help/faq-slugs";
 import {
   normalizeHelpSearch,
   searchHelpRecords,
@@ -22,10 +23,9 @@ import { cn } from "@/lib/utils";
 
 type HelpSearchProps = {
   records: HelpSearchRecord[];
-  onActivateFaq: (id: string) => void;
 };
 
-export function HelpSearch({ records, onActivateFaq }: HelpSearchProps) {
+export function HelpSearch({ records }: HelpSearchProps) {
   const router = useRouter();
   const inputId = useId();
   const resultsId = useId();
@@ -50,23 +50,15 @@ export function HelpSearch({ records, onActivateFaq }: HelpSearchProps) {
       closeResults();
 
       if (record.kind === "faq") {
-        onActivateFaq(record.id);
+        router.push(helpFaqHref(record.id));
         return;
       }
 
       if (!record.href) return;
 
-      if (record.href.includes("#")) {
-        const [, hash] = record.href.split("#");
-        if (hash) {
-          onActivateFaq(hash);
-        }
-        return;
-      }
-
       router.push(record.href);
     },
-    [closeResults, onActivateFaq, router]
+    [closeResults, router]
   );
 
   const handleInput = (value: string) => {

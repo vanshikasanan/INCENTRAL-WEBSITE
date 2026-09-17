@@ -53,7 +53,7 @@ export const footerNavGroups: FooterNavGroup[] = [
     links: [
       { label: "Help", href: "/help" },
       { label: "Support", href: "/support" },
-      { label: "Warranty", href: "/help#warranty-support" },
+      { label: "Warranty", href: "/help/warranty-support" },
     ],
   },
   {
@@ -62,10 +62,10 @@ export const footerNavGroups: FooterNavGroup[] = [
     links: [
       {
         label: "Returns, Refunds & Cancellation",
-        href: "/returns-refunds-cancellation",
+        href: "/policies/returns-refunds-cancellation",
       },
-      { label: "Privacy Notice", href: "/privacy-notice" },
-      { label: "Terms & Conditions", href: "/terms-conditions" },
+      { label: "Privacy Notice", href: "/policies/privacy-notice" },
+      { label: "Terms & Conditions", href: "/policies/terms-conditions" },
     ],
   },
 ];

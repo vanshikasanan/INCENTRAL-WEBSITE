@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 
 import { Container } from "@/components/common/container";
 import { helpPage } from "@/config/help";
+import { helpFaqHref } from "@/lib/help/faq-slugs";
 import type { HelpSearchRecord } from "@/lib/help-search";
 import { cn } from "@/lib/utils";
 
@@ -53,7 +54,11 @@ function PrimaryButton({
   );
 }
 
-export function HelpPage() {
+type HelpPageProps = {
+  activeFaqId?: string;
+};
+
+export function HelpPage({ activeFaqId }: HelpPageProps = {}) {
   const faqRefs = useRef<Record<string, HTMLDetailsElement | null>>({});
 
   const searchRecords = useMemo<HelpSearchRecord[]>(() => {
@@ -70,7 +75,7 @@ export function HelpPage() {
       kind: "faq" as const,
       title: faq.question,
       searchText: faq.searchText,
-      href: `/help#${faq.id}`,
+      href: helpFaqHref(faq.id),
     }));
 
     return [...topics, ...faqs];
@@ -91,6 +96,11 @@ export function HelpPage() {
   }, []);
 
   useEffect(() => {
+    if (activeFaqId) {
+      openFaq(activeFaqId);
+      return;
+    }
+
     const openFromHash = () => {
       const id = window.location.hash.slice(1);
       if (id) openFaq(id);
@@ -99,7 +109,7 @@ export function HelpPage() {
     openFromHash();
     window.addEventListener("hashchange", openFromHash);
     return () => window.removeEventListener("hashchange", openFromHash);
-  }, [openFaq]);
+  }, [activeFaqId, openFaq]);
 
   const { hero, supportCard, topicsSection, faqSection, closeSection } = helpPage;
 
@@ -119,7 +129,7 @@ export function HelpPage() {
               {hero.lead}
             </p>
 
-            <HelpSearch records={searchRecords} onActivateFaq={openFaq} />
+            <HelpSearch records={searchRecords} />
           </div>
 
           <aside className="rounded-[22px] bg-[#0e2b3d] px-7 py-7 text-white shadow-[0_20px_44px_rgba(14,43,61,0.14)] max-[980px]:max-w-[620px]">

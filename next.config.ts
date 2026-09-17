@@ -1,10 +1,27 @@
 import type { NextConfig } from "next";
 
+import { policySlugs } from "./src/config/policies";
+import { planRouteIds } from "./src/config/plans";
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
   images: {
     formats: ["image/avif", "image/webp"],
+  },
+  async redirects() {
+    return [
+      ...planRouteIds.map((planId) => ({
+        source: `/${planId}`,
+        destination: `/plans/${planId}`,
+        permanent: true,
+      })),
+      ...policySlugs.map((slug) => ({
+        source: `/${slug}`,
+        destination: `/policies/${slug}`,
+        permanent: true,
+      })),
+    ];
   },
 };
 
