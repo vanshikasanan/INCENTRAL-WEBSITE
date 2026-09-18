@@ -36,6 +36,7 @@ export const api = {
   },
   auth: {
     signIn:  (b) => apiFetch('/auth/signin',  { method: 'POST', body: JSON.stringify(b) }),
+    signUp:  (b) => apiFetch('/auth/signup',  { method: 'POST', body: JSON.stringify(b) }),
     signOut: ()  => apiFetch('/auth/signout', { method: 'POST' }),
     me:      ()  => apiFetch('/auth/me'),
   },

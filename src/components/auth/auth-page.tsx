@@ -17,26 +17,19 @@ import { authPage, type AuthTab } from "@/config/auth";
 import { parseAuthSearchParams } from "@/lib/auth/search-params";
 import { resolveAuthRedirect } from "@/lib/auth/redirect";
 import { writeAuthSession } from "@/lib/auth/session";
+import { api } from "@/lib/backend";
 import { cn } from "@/lib/utils";
 
 function RequiredMarker() {
   return (
     <>
-      <span aria-hidden="true" className="auth-required-marker">
-        *
-      </span>
+      <span aria-hidden="true" className="auth-required-marker">*</span>
       <span className="sr-only"> required</span>
     </>
   );
 }
 
-function FieldLabel({
-  htmlFor,
-  children,
-}: {
-  htmlFor: string;
-  children: ReactNode;
-}) {
+function FieldLabel({ htmlFor, children }: { htmlFor: string; children: ReactNode }) {
   return (
     <label htmlFor={htmlFor}>
       {children}
@@ -45,17 +38,15 @@ function FieldLabel({
   );
 }
 
-type FormResult = {
-  tone: "good" | "bad";
-  message: string;
-} | null;
+type FormResult = { tone: "good" | "bad"; message: string } | null;
 
 export function AuthPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const signInFormRef = useRef<HTMLFormElement>(null);
   const createFormRef = useRef<HTMLFormElement>(null);
-  const resultRef = useRef<HTMLDivElement>(null);
+  const signInResultRef = useRef<HTMLDivElement>(null);
+  const createResultRef = useRef<HTMLDivElement>(null);
 
   const { mode: initialMode, next, checkout } = useMemo(
     () => parseAuthSearchParams(Object.fromEntries(searchParams.entries())),
@@ -64,19 +55,16 @@ export function AuthPage() {
 
   const [activeTab, setActiveTab] = useState<AuthTab>(initialMode);
   const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    setActiveTab(initialMode);
-  }, [initialMode]);
   const [signInResult, setSignInResult] = useState<FormResult>(null);
   const [createResult, setCreateResult] = useState<FormResult>(null);
+
+  useEffect(() => { setActiveTab(initialMode); }, [initialMode]);
 
   const switchTab = useCallback(
     (tab: AuthTab) => {
       setActiveTab(tab);
       setSignInResult(null);
       setCreateResult(null);
-
       const params = new URLSearchParams(searchParams.toString());
       params.set("mode", tab === "create" ? "create" : "login");
       router.replace(`/sign-in?${params.toString()}`, { scroll: false });
@@ -84,63 +72,33 @@ export function AuthPage() {
     [router, searchParams]
   );
 
-  const completeAuth = useCallback(
-    async (
+  const finishAuth = useCallback(
+    (
       mode: AuthTab,
-      payload: {
-        identity: string;
-        name?: string;
-        company?: string;
-        email?: string;
-        mobile?: string;
-      },
-      setResult: (result: FormResult) => void
+      user: { name?: string; company?: string; email?: string; mobile?: string },
+      setResult: (r: FormResult) => void,
+      resultRef: React.RefObject<HTMLDivElement | null>
     ) => {
-      if (!authPage.demoAuthEnabled) {
-        setResult({
-          tone: "bad",
-          message: authPage.messages.notConnected,
-        });
-        resultRef.current?.focus();
-        return;
-      }
-
       writeAuthSession({
         authenticated: true,
-        identity: payload.identity,
-        name: payload.name,
-        company: payload.company,
-        email: payload.email,
-        mobile: payload.mobile,
+        identity: user.email ?? user.mobile ?? "account",
+        name: user.name,
+        company: user.company,
+        email: user.email,
+        mobile: user.mobile,
         mode: mode === "create" ? "create" : "signin",
         signedInAt: new Date().toISOString(),
       });
 
-      const redirectTarget = resolveAuthRedirect(next, checkout);
-      const stayOnPage = !next && !checkout;
-
-      if (stayOnPage) {
-        setResult({
-          tone: "good",
-          message:
-            mode === "create"
-              ? authPage.messages.accountCreatedBrowse
-              : authPage.messages.signedInBrowse,
-        });
-        resultRef.current?.focus();
-        return;
-      }
+      const redirectTarget = next && next.startsWith("/") && !next.startsWith("//")
+        ? next
+        : resolveAuthRedirect(next, checkout);
 
       setResult({
         tone: "good",
-        message:
-          mode === "create"
-            ? authPage.messages.accountCreated
-            : authPage.messages.signedIn,
+        message: mode === "create" ? authPage.messages.accountCreated : authPage.messages.signedIn,
       });
-
-      await new Promise((resolve) => window.setTimeout(resolve, 180));
-      router.push(redirectTarget);
+      window.setTimeout(() => router.push(redirectTarget), 180);
     },
     [checkout, next, router]
   );
@@ -154,11 +112,16 @@ export function AuthPage() {
     setSignInResult(null);
 
     const data = new FormData(form);
-    const identity = String(data.get("identity") || "").trim();
+    const email = String(data.get("identity") || "").trim();
+    const password = String(data.get("password") || "");
 
     try {
-      await new Promise((resolve) => window.setTimeout(resolve, 400));
-      await completeAuth("signin", { identity }, setSignInResult);
+      const { user } = await api.auth.signIn({ email, password });
+      finishAuth("signin", user ?? {}, setSignInResult, signInResultRef);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Sign in failed. Check your credentials.";
+      setSignInResult({ tone: "bad", message });
+      signInResultRef.current?.focus();
     } finally {
       setSubmitting(false);
     }
@@ -174,11 +137,8 @@ export function AuthPage() {
     const confirmPassword = String(data.get("confirmPassword") || "");
 
     if (password !== confirmPassword) {
-      setCreateResult({
-        tone: "bad",
-        message: authPage.messages.passwordMismatch,
-      });
-      resultRef.current?.focus();
+      setCreateResult({ tone: "bad", message: authPage.messages.passwordMismatch });
+      createResultRef.current?.focus();
       return;
     }
 
@@ -191,18 +151,12 @@ export function AuthPage() {
     const mobile = String(data.get("mobile") || "").trim();
 
     try {
-      await new Promise((resolve) => window.setTimeout(resolve, 500));
-      await completeAuth(
-        "create",
-        {
-          identity: email || mobile,
-          name,
-          company,
-          email,
-          mobile,
-        },
-        setCreateResult
-      );
+      const { user } = await api.auth.signUp({ name, company, email, mobile, password });
+      finishAuth("create", user ?? { name, email, mobile, company }, setCreateResult, createResultRef);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Account creation failed. Please try again.";
+      setCreateResult({ tone: "bad", message });
+      createResultRef.current?.focus();
     } finally {
       setSubmitting(false);
     }
@@ -240,29 +194,15 @@ export function AuthPage() {
                   <strong>{checkoutContext.message}</strong>{" "}
                   {checkoutContext.detail}
                 </span>
-                <Link href={checkoutContext.cartHref}>
-                  {checkoutContext.backLabel}
-                </Link>
+                <Link href={checkoutContext.cartHref}>{checkoutContext.backLabel}</Link>
               </div>
             ) : null}
 
             <div className="auth-tabs" role="tablist" aria-label="Account mode">
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeTab === "signin"}
-                className="auth-tab"
-                onClick={() => switchTab("signin")}
-              >
+              <button type="button" role="tab" aria-selected={activeTab === "signin"} className="auth-tab" onClick={() => switchTab("signin")}>
                 {tabs.signIn}
               </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeTab === "create"}
-                className="auth-tab"
-                onClick={() => switchTab("create")}
-              >
+              <button type="button" role="tab" aria-selected={activeTab === "create"} className="auth-tab" onClick={() => switchTab("create")}>
                 {tabs.create}
               </button>
             </div>
@@ -278,37 +218,17 @@ export function AuthPage() {
               <p>{signIn.description}</p>
 
               <div className="auth-field">
-                <FieldLabel htmlFor="signin-identity">
-                  Email or mobile number
-                </FieldLabel>
-                <input
-                  id="signin-identity"
-                  name="identity"
-                  autoComplete="username"
-                  required
-                />
+                <FieldLabel htmlFor="signin-identity">Email or mobile number</FieldLabel>
+                <input id="signin-identity" name="identity" autoComplete="username" required />
               </div>
 
               <div className="auth-field">
                 <FieldLabel htmlFor="signin-password">Password</FieldLabel>
-                <input
-                  id="signin-password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                />
+                <input id="signin-password" name="password" type="password" autoComplete="current-password" required />
               </div>
 
               {signInResult ? (
-                <div
-                  ref={resultRef}
-                  tabIndex={-1}
-                  className={cn(
-                    "auth-result",
-                    signInResult.tone === "good" ? "good" : "bad"
-                  )}
-                >
+                <div ref={signInResultRef} tabIndex={-1} className={cn("auth-result", signInResult.tone === "good" ? "good" : "bad")}>
                   {signInResult.message}
                 </div>
               ) : null}
@@ -320,16 +240,10 @@ export function AuthPage() {
 
               <div className="auth-footer-row">
                 <p className="auth-required-note">
-                  <span aria-hidden="true" className="auth-required-marker">
-                    *
-                  </span>{" "}
+                  <span aria-hidden="true" className="auth-required-marker">*</span>{" "}
                   Fields marked with an asterisk are mandatory.
                 </p>
-                <button
-                  type="submit"
-                  className="auth-submit"
-                  disabled={submitting}
-                >
+                <button type="submit" className="auth-submit" disabled={submitting}>
                   {signIn.submit}
                 </button>
               </div>
@@ -351,106 +265,48 @@ export function AuthPage() {
               <div className="auth-create-grid">
                 <div className="auth-field">
                   <FieldLabel htmlFor="create-name">Full name</FieldLabel>
-                  <input
-                    id="create-name"
-                    name="name"
-                    autoComplete="name"
-                    placeholder="Full name"
-                    required
-                  />
+                  <input id="create-name" name="name" autoComplete="name" placeholder="Full name" required />
                 </div>
                 <div className="auth-field">
                   <FieldLabel htmlFor="create-company">Company</FieldLabel>
-                  <input
-                    id="create-company"
-                    name="company"
-                    autoComplete="organization"
-                    placeholder="Company name"
-                    required
-                  />
+                  <input id="create-company" name="company" autoComplete="organization" placeholder="Company name" required />
                 </div>
                 <div className="auth-field">
                   <FieldLabel htmlFor="create-email">Work email</FieldLabel>
-                  <input
-                    id="create-email"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    placeholder="name@company.com"
-                    required
-                  />
+                  <input id="create-email" name="email" type="email" autoComplete="email" placeholder="name@company.com" required />
                 </div>
                 <div className="auth-field">
                   <FieldLabel htmlFor="create-mobile">Mobile number</FieldLabel>
-                  <input
-                    id="create-mobile"
-                    name="mobile"
-                    type="tel"
-                    autoComplete="tel"
-                    placeholder="Mobile number"
-                    required
-                  />
+                  <input id="create-mobile" name="mobile" type="tel" autoComplete="tel" placeholder="Mobile number" required />
                 </div>
                 <div className="auth-field">
-                  <FieldLabel htmlFor="create-password">
-                    Create password
-                  </FieldLabel>
-                  <input
-                    id="create-password"
-                    name="password"
-                    type="password"
-                    autoComplete="new-password"
-                    placeholder="Create password"
-                    required
-                  />
+                  <FieldLabel htmlFor="create-password">Create password</FieldLabel>
+                  <input id="create-password" name="password" type="password" autoComplete="new-password" placeholder="Create password" required />
                 </div>
                 <div className="auth-field">
-                  <FieldLabel htmlFor="create-confirm">
-                    Confirm password
-                  </FieldLabel>
-                  <input
-                    id="create-confirm"
-                    name="confirmPassword"
-                    type="password"
-                    autoComplete="new-password"
-                    placeholder="Confirm password"
-                    required
-                  />
+                  <FieldLabel htmlFor="create-confirm">Confirm password</FieldLabel>
+                  <input id="create-confirm" name="confirmPassword" type="password" autoComplete="new-password" placeholder="Confirm password" required />
                 </div>
               </div>
 
               {createResult ? (
-                <div
-                  ref={resultRef}
-                  tabIndex={-1}
-                  className={cn(
-                    "auth-result",
-                    createResult.tone === "good" ? "good" : "bad"
-                  )}
-                >
+                <div ref={createResultRef} tabIndex={-1} className={cn("auth-result", createResult.tone === "good" ? "good" : "bad")}>
                   {createResult.message}
                 </div>
               ) : null}
 
               <p className="auth-legal">
                 By creating an account, you agree to the{" "}
-                <Link href={create.termsHref}>Terms & Conditions</Link> and
-                acknowledge the{" "}
+                <Link href={create.termsHref}>Terms & Conditions</Link> and acknowledge the{" "}
                 <Link href={create.privacyHref}>Privacy Notice</Link>.
               </p>
 
               <div className="auth-footer-row auth-create-actions">
                 <p className="auth-required-note">
-                  <span aria-hidden="true" className="auth-required-marker">
-                    *
-                  </span>{" "}
+                  <span aria-hidden="true" className="auth-required-marker">*</span>{" "}
                   Fields marked with an asterisk are mandatory.
                 </p>
-                <button
-                  type="submit"
-                  className="auth-submit"
-                  disabled={submitting}
-                >
+                <button type="submit" className="auth-submit" disabled={submitting}>
                   {create.submit}
                 </button>
               </div>

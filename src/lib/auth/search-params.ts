@@ -18,7 +18,7 @@ export function parseAuthSearchParams(
     next: pickParam(searchParams.next),
     checkout:
       pickParam(searchParams.checkout) === "1" ||
-      pickParam(searchParams.next)?.includes("checkout") === true,
+      pickParam(searchParams.next) === "checkout",
   };
 }
 
