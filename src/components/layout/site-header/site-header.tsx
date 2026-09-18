@@ -9,6 +9,8 @@ import { Logo } from "@/components/common/logo";
 import { NavLink } from "@/components/common/nav-link";
 import { headerActions, primaryNavLinks } from "@/config/navigation";
 import { siteConfig } from "@/config/site";
+import { useAuth } from "@/hooks/use-auth";
+import { getHeaderAccountLink } from "@/lib/auth/nav-links";
 import { isNavLinkActive } from "@/lib/navigation-utils";
 import { cn } from "@/lib/utils";
 
@@ -18,6 +20,8 @@ import { PlansMegaMenu } from "./plans-mega-menu";
 export function SiteHeader() {
   const desktopMegaBreakpoint = 1041;
   const pathname = usePathname();
+  const { isAuthenticated } = useAuth();
+  const accountLink = getHeaderAccountLink(isAuthenticated);
   const plansMenuId = useId();
   const mobileMenuId = useId();
   const headerRef = useRef<HTMLElement>(null);
@@ -157,10 +161,12 @@ export function SiteHeader() {
 
         <div className="flex min-w-max items-center justify-end gap-[5px] max-[390px]:gap-0.5 min-[1100px]:gap-[7px]">
           <Link
-            href={headerActions.signIn.href}
-            className="hidden min-h-11 items-center justify-center rounded-full border border-inc-blue bg-inc-blue px-[18px] text-[15px] leading-none font-semibold whitespace-nowrap text-white no-underline transition-[background,border-color,box-shadow,transform] duration-200 hover:border-inc-blue-hover hover:bg-inc-blue-hover hover:shadow-[0_8px_22px_rgba(5,101,207,0.16)] min-[1100px]:inline-flex motion-safe:hover:-translate-y-px"
+            href={accountLink.href}
+            aria-label={accountLink.ariaLabel}
+            data-inc-account-link=""
+            className="inc-account-link hidden min-h-11 items-center justify-center rounded-full border border-inc-blue bg-inc-blue px-[18px] text-[15px] leading-none font-semibold whitespace-nowrap text-white no-underline transition-[background,border-color,box-shadow,transform] duration-200 hover:border-inc-blue-hover hover:bg-inc-blue-hover hover:shadow-[0_8px_22px_rgba(5,101,207,0.16)] min-[1100px]:inline-flex motion-safe:hover:-translate-y-px"
           >
-            {headerActions.signIn.label}
+            {accountLink.label}
           </Link>
 
           <Link

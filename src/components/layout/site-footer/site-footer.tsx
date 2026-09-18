@@ -19,9 +19,39 @@ import {
   footerSupport,
 } from "@/config/footer";
 import { siteConfig } from "@/config/site";
+import { useAuth } from "@/hooks/use-auth";
+import { getHeaderAccountLink, getOrdersLink } from "@/lib/auth/nav-links";
 import { cn } from "@/lib/utils";
 
 export function SiteFooter() {
+  const { isAuthenticated } = useAuth();
+  const accountLink = getHeaderAccountLink(isAuthenticated);
+  const resolvedFooterNavGroups = footerNavGroups.map((group) => {
+    if (group.id !== "account") return group;
+
+    return {
+      ...group,
+      links: group.links.map((link) => {
+        if (link.label === "Sign In") {
+          return {
+            ...link,
+            label: accountLink.label,
+            href: accountLink.href,
+          };
+        }
+
+        if (link.label === "Orders") {
+          return {
+            ...link,
+            href: getOrdersLink(isAuthenticated),
+          };
+        }
+
+        return link;
+      }),
+    };
+  });
+
   const socialIconMap = {
     linkedin: LinkedInIcon,
     facebook: FacebookIcon,
@@ -98,7 +128,7 @@ export function SiteFooter() {
         </section>
 
         <div className="hidden grid-cols-4 gap-[34px] border-b border-inc-footer-border py-[23px] pb-[21px] min-[801px]:grid">
-          {footerNavGroups.map((group) => (
+          {resolvedFooterNavGroups.map((group) => (
             <nav key={group.id} aria-labelledby={`incf-${group.id}`}>
               <h2
                 id={`incf-${group.id}`}
@@ -108,9 +138,18 @@ export function SiteFooter() {
               </h2>
               <ul className="m-0 grid list-none gap-1 p-0">
                 {group.links.map((link) => (
-                  <li key={link.href} className="m-0 p-0">
+                  <li key={`${group.id}-${link.label}`} className="m-0 p-0">
                     <Link
                       href={link.href}
+                      data-incf-account={
+                        link.label === "Sign In" ||
+                        link.label === "My InCentral"
+                          ? ""
+                          : undefined
+                      }
+                      data-incf-orders={
+                        link.label === "Orders" ? "" : undefined
+                      }
                       className="inline-flex min-h-[23px] items-center text-[13.5px] leading-[1.35] font-normal text-inc-footer-link no-underline hover:text-white hover:underline"
                     >
                       {link.label}
@@ -123,7 +162,7 @@ export function SiteFooter() {
         </div>
 
         <div className="border-b border-inc-footer-border py-[5px] pb-[7px] min-[801px]:hidden">
-          {footerNavGroups.map((group) => (
+          {resolvedFooterNavGroups.map((group) => (
             <details
               key={group.id}
               className="group/details border-b border-[#24272a] last:border-b-0"
@@ -133,7 +172,7 @@ export function SiteFooter() {
               </summary>
               <ul className="m-0 grid list-none gap-px pb-[9px] p-0">
                 {group.links.map((link) => (
-                  <li key={link.href} className="m-0 p-0">
+                  <li key={`${group.id}-${link.label}`} className="m-0 p-0">
                     <Link
                       href={link.href}
                       className="inline-flex min-h-9 w-full items-center text-[13px] text-inc-footer-link no-underline hover:text-white hover:underline"

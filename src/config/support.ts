@@ -97,7 +97,7 @@ export const supportPage = {
     nextTitle: "What happens next",
     nextDescription:
       "Our support team will review your request. For urgent issues, call 1800-268-9111 and share the same order or device details.",
-    myInCentral: { label: "Open My InCentral", href: "/sign-in?mode=login" },
+    myInCentral: { label: "Open My InCentral", href: "/account" },
     againLabel: "Submit another request",
   },
 } as const;
