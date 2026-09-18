@@ -1,0 +1,20 @@
+import { authPage } from "@/config/auth";
+
+export function resolveAuthRedirect(
+  next: string | null,
+  checkout: boolean
+): string {
+  if (checkout || next === "checkout") {
+    return authPage.checkoutContext.cartHref;
+  }
+
+  if (next === "orders") {
+    return authPage.accountHref;
+  }
+
+  if (next && next.startsWith("/")) {
+    return next;
+  }
+
+  return authPage.accountHref;
+}

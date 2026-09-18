@@ -7,6 +7,8 @@ import { usePathname } from "next/navigation";
 import { headerActions, primaryNavLinks } from "@/config/navigation";
 import { planAccentTokens, planProducts, plansMega } from "@/config/plans";
 import { siteConfig } from "@/config/site";
+import { useAuth } from "@/hooks/use-auth";
+import { getHeaderAccountLink } from "@/lib/auth/nav-links";
 import { isNavLinkActive } from "@/lib/navigation-utils";
 import { cn } from "@/lib/utils";
 
@@ -22,6 +24,8 @@ export function MobileNavigation({
   onNavigate,
 }: MobileNavigationProps) {
   const pathname = usePathname();
+  const { isAuthenticated } = useAuth();
+  const accountLink = getHeaderAccountLink(isAuthenticated);
 
   if (!open) {
     return null;
@@ -122,11 +126,13 @@ export function MobileNavigation({
         </ul>
 
         <Link
-          href={headerActions.signIn.href}
+          href={accountLink.href}
+          aria-label={accountLink.ariaLabel}
+          data-inc-mobile-account=""
           onClick={onNavigate}
-          className="mt-auto flex min-h-[50px] w-full items-center justify-center rounded-full border border-inc-blue bg-inc-blue px-[18px] text-[15px] font-semibold text-white no-underline"
+          className="inc-mobile-cta mt-auto flex min-h-[50px] w-full items-center justify-center rounded-full border border-inc-blue bg-inc-blue px-[18px] text-[15px] font-semibold text-white no-underline"
         >
-          {headerActions.signIn.label}
+          {accountLink.label}
         </Link>
         <Link
           href={`tel:${siteConfig.phone.raw}`}

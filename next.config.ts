@@ -22,6 +22,11 @@ const nextConfig: NextConfig = {
         destination: `/policies/${slug}`,
         permanent: true,
       })),
+      {
+        source: "/my-incentral",
+        destination: "/account",
+        permanent: true,
+      },
     ];
   },
 };
