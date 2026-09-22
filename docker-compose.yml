@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+  incentral-website:
+    image: incentral-website:latest
+    restart: always
+
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+
+    container_name: incentral-website
+
+    ports:
+      - "2278:3000"

@@ -3,9 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { authPage } from "@/config/auth";
+import { api } from "@/lib/backend";
 import {
   clearAuthSession,
   readAuthSession,
+  writeAuthSession,
   type AuthSession,
 } from "@/lib/auth/session";
 
@@ -19,19 +21,46 @@ export function useAuth() {
   }, []);
 
   useEffect(() => {
-    refresh();
+    // Hydrate from sessionStorage first for instant render
+    const cached = readAuthSession();
+    if (cached) {
+      setSession(cached);
+      setReady(true);
+      return;
+    }
 
+    // No cache — check if cookie session is still alive
+    api.auth.me()
+      .then((user: Record<string, unknown>) => {
+        const s: AuthSession = {
+          authenticated: true,
+          identity: String(user.email || user.mobile || "account"),
+          name: user.name as string | undefined,
+          company: user.company as string | undefined,
+          email: user.email as string | undefined,
+          mobile: user.mobile as string | undefined,
+          mode: "signin",
+          signedInAt: new Date().toISOString(),
+        };
+        writeAuthSession(s);
+        setSession(s);
+      })
+      .catch(() => {
+        // No active session
+      })
+      .finally(() => setReady(true));
+  }, []);
+
+  useEffect(() => {
     const onChange = () => refresh();
     window.addEventListener("incentral:auth-changed", onChange);
-    window.addEventListener("storage", onChange);
-
     return () => {
       window.removeEventListener("incentral:auth-changed", onChange);
-      window.removeEventListener("storage", onChange);
     };
   }, [refresh]);
 
-  const signOut = useCallback(() => {
+  const signOut = useCallback(async () => {
+    await api.auth.signOut().catch(() => {});
     clearAuthSession();
     refresh();
   }, [refresh]);

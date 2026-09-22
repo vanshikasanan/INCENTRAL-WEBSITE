@@ -18,15 +18,6 @@ export function readAuthSession(): AuthSession | null {
     const raw = sessionStorage.getItem(AUTH_STORAGE_KEY);
     if (!raw) return null;
 
-    if (raw === "1") {
-      return {
-        authenticated: true,
-        identity: "account",
-        mode: "signin",
-        signedInAt: new Date().toISOString(),
-      };
-    }
-
     const parsed = JSON.parse(raw) as AuthSession;
     return parsed?.authenticated ? parsed : null;
   } catch {

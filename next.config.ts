@@ -4,6 +4,7 @@ import { policySlugs } from "./src/config/policies";
 import { planRouteIds } from "./src/config/plans";
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   poweredByHeader: false,
   reactStrictMode: true,
   images: {

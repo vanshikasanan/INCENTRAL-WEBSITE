@@ -12,9 +12,9 @@ export function resolveAuthRedirect(
     return authPage.accountHref;
   }
 
-  if (next && next.startsWith("/")) {
+  if (next && next.startsWith("/") && !next.startsWith("//")) {
     return next;
   }
 
-  return authPage.accountHref;
+  return "/";
 }
