@@ -1,0 +1,515 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+
+import {
+  CONFIGURATOR_STORAGE_KEY,
+  MODAL_CONFIGURATOR_STORAGE_KEY,
+  NEED_ALIASES,
+  NEED_SHORT_LABELS,
+  aisCoverageStatus,
+  canonicalMake,
+  cumulativeCapabilities,
+  expandNeeds,
+  formatMoney,
+  planMeta,
+  productFor,
+  recommendGroup,
+  variantLabel,
+  visibleOemEntries,
+  resolveOem,
+  vehicleData,
+  INDIA_REGIONS,
+  addToConfiguredCart,
+  saveQuoteContext,
+  type RecommendationResult,
+} from "@/lib/plan-finder";
+import type { CartLine, ConfiguratorState, PlanFamily } from "@/lib/plan-finder";
+
+const defaultState: ConfiguratorState = {
+  step: 1,
+  segment: "3w",
+  make: "",
+  emission: "",
+  aisRequired: false,
+  stateId: "",
+  selectedFamily: "",
+  quantity: 1,
+  selectedNeeds: [],
+};
+
+function restoreSelectedNeeds(expanded: string[]): string[] {
+  const selected: string[] = [];
+  if (expanded.includes("tracking")) selected.push("tracking");
+  if (expanded.includes("predictive_health")) selected.push("predictive_health");
+  if (expanded.includes("ai_video_telematics")) selected.push("ai_video_telematics");
+  if (expanded.includes("fuel_def") && expanded.includes("diagnostics")) {
+    selected.push("fuel_package");
+  }
+  return selected;
+}
+
+function loadState(storageKey: string): ConfiguratorState {
+  if (typeof window === "undefined") return defaultState;
+  try {
+    const stored = JSON.parse(sessionStorage.getItem(storageKey) || "null");
+    if (!stored || typeof stored !== "object") return defaultState;
+    const expanded = Array.isArray(stored.needs) ? stored.needs : [];
+    return {
+      ...defaultState,
+      ...stored,
+      segment: stored.segment || defaultState.segment,
+      selectedNeeds: Array.isArray(stored.selectedNeeds)
+        ? stored.selectedNeeds
+        : restoreSelectedNeeds(expanded),
+    };
+  } catch {
+    return defaultState;
+  }
+}
+
+function persistState(storageKey: string, state: ConfiguratorState) {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.setItem(
+      storageKey,
+      JSON.stringify({ ...state, needs: expandNeeds(state.selectedNeeds) })
+    );
+  } catch {
+    /* ignore */
+  }
+}
+
+function coverageStatus(aisRequired: boolean, stateId: string) {
+  if (!aisRequired) return { status: "ready" as const, copy: "" };
+  const status = aisCoverageStatus(stateId);
+  if (status === "supported") return { status: "ready" as const, copy: "" };
+  if (status === "confirm") {
+    return {
+      status: "confirm" as const,
+      copy: "AIS-140 availability for this state needs confirmation.",
+    };
+  }
+  if (status === "unavailable") {
+    return {
+      status: "unavailable" as const,
+      copy: "AIS-140 is not currently confirmed for this state.",
+    };
+  }
+  return {
+    status: "needs-state" as const,
+    copy: "Select the state where these vehicles will be installed.",
+  };
+}
+
+export type UsePlanFinderOptions = {
+  variant?: "section" | "modal";
+  onAddedToCart?: () => void;
+};
+
+export function usePlanFinder({ variant = "section", onAddedToCart }: UsePlanFinderOptions = {}) {
+  const storageKey =
+    variant === "modal" ? MODAL_CONFIGURATOR_STORAGE_KEY : CONFIGURATOR_STORAGE_KEY;
+
+  const [state, setState] = useState<ConfiguratorState>(defaultState);
+  const [error, setError] = useState<string | null>(null);
+  const [cartSuccess, setCartSuccess] = useState<{
+    title: string;
+    summary: string;
+  } | null>(null);
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    setState(loadState(storageKey));
+    setHydrated(true);
+  }, [storageKey]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    persistState(storageKey, state);
+  }, [hydrated, state, storageKey]);
+
+  const expandedNeeds = useMemo(
+    () => expandNeeds(state.selectedNeeds),
+    [state.selectedNeeds]
+  );
+
+  const result: RecommendationResult | null = useMemo(() => {
+    if (state.step !== 2) return null;
+    return recommendGroup({
+      segment: state.segment,
+      make: state.make,
+      emission: state.emission,
+      aisRequired: state.aisRequired,
+      stateId: state.stateId,
+      quantity: state.quantity,
+      needs: expandedNeeds,
+    });
+  }, [state, expandedNeeds]);
+
+  useEffect(() => {
+    if (state.step !== 2 || !result || result.status !== "VERIFIED") return;
+    if (
+      state.selectedFamily &&
+      result.recommendations.some((rec) => rec.family === state.selectedFamily)
+    ) {
+      return;
+    }
+    const family =
+      result.recommendationFamily || result.recommendations[0]?.family || "";
+    if (family) {
+      setState((prev) => ({ ...prev, selectedFamily: family as PlanFamily }));
+    }
+  }, [state.step, state.selectedFamily, result]);
+
+  const segmentOptions = useMemo(
+    () =>
+      Object.entries(vehicleData)
+        .filter(([key]) => key !== "other")
+        .map(([value, entry]) => ({ value, label: entry.label })),
+    []
+  );
+
+  const makeOptions = useMemo(() => {
+    if (!state.segment) return [];
+    return visibleOemEntries(state.segment).map(([value, entry]) => ({
+      value,
+      label: entry.label,
+    }));
+  }, [state.segment]);
+
+  const emissionOptions = useMemo(() => {
+    if (!state.segment || !state.make) return [];
+    const oem = resolveOem(state.segment, state.make);
+    return Object.keys(oem?.emissions || {}).map((value) => ({
+      value,
+      label: value,
+    }));
+  }, [state.segment, state.make]);
+
+  const summaryText = useMemo(() => {
+    if (!result || result.status !== "VERIFIED") return "Not set";
+    return [
+      result.summary.segmentLabel,
+      result.summary.manufacturerLabel,
+      result.summary.emission,
+      variantLabel(state.aisRequired),
+    ]
+      .filter(Boolean)
+      .join(" · ");
+  }, [result, state.aisRequired]);
+
+  const highlightedFamily = useCallback((rec: RecommendationResult) => {
+    return rec.recommendationFamily || rec.bestValueFamily || "";
+  }, []);
+
+  const selectedRecommendation = useMemo(() => {
+    if (!result || result.status !== "VERIFIED") return null;
+    const family =
+      state.selectedFamily &&
+      result.recommendations.some((r) => r.family === state.selectedFamily)
+        ? state.selectedFamily
+        : highlightedFamily(result) &&
+            result.recommendations.some((r) => r.family === highlightedFamily(result))
+          ? (highlightedFamily(result) as PlanFamily)
+          : (result.recommendations[0]?.family as PlanFamily | undefined);
+    return result.recommendations.find((r) => r.family === family) ?? null;
+  }, [result, state.selectedFamily, highlightedFamily]);
+
+  const resultsCopy = useMemo(() => {
+    if (!result || result.status !== "VERIFIED") return "";
+    const count = result.recommendations.length;
+    const hasNeeds = expandedNeeds.length > 0;
+    const hasFullNeedsMatch = !hasNeeds || result.needsFullyMet;
+
+    if (count === 1) {
+      return hasNeeds && !hasFullNeedsMatch
+        ? "This plan fits your vehicle, but it does not include everything you selected."
+        : "This is the only plan that fits these vehicle details.";
+    }
+    if (hasNeeds && hasFullNeedsMatch) {
+      return "All plans shown fit your vehicle. Best Value is the lowest compatible plan that covers everything you selected.";
+    }
+    if (hasNeeds) {
+      return "These plans fit your vehicle, but none includes everything you selected.";
+    }
+    return "All plans shown fit these vehicle details. Best Value has the broadest feature set available.";
+  }, [result, expandedNeeds]);
+
+  const availabilityNotices = useMemo(() => {
+    if (!result || result.status !== "VERIFIED") return [];
+    const notices: string[] = [];
+    const hasNeeds = expandedNeeds.length > 0;
+    const hasFullNeedsMatch = !hasNeeds || result.needsFullyMet;
+
+    if (hasNeeds && !hasFullNeedsMatch) {
+      const missing = (result.unsupportedNeeds || []).map(
+        (key) => NEED_SHORT_LABELS[key] || key
+      );
+      const missingCopy = missing.length
+        ? ` The unavailable need${missing.length === 1 ? " is" : "s are"} ${missing.join(", ")}.`
+        : "";
+      notices.push(
+        `No compatible plan for this vehicle covers everything you selected.${missingCopy} Change your choices or contact us.`
+      );
+    }
+
+    const cov = coverageStatus(state.aisRequired, state.stateId);
+    if (
+      state.aisRequired &&
+      (cov.status === "confirm" || cov.status === "unavailable")
+    ) {
+      notices.push(cov.copy);
+    }
+
+    return notices;
+  }, [result, expandedNeeds, state.aisRequired, state.stateId]);
+
+  const resultsTitle = useMemo(() => {
+    if (!result || result.status !== "VERIFIED") return "Plans that fit";
+    const count = result.recommendations.length;
+    return count === 1 ? "1 plan fits" : `${count} plans fit`;
+  }, [result]);
+
+  const update = useCallback((patch: Partial<ConfiguratorState>) => {
+    setState((prev) => ({ ...prev, ...patch }));
+  }, []);
+
+  const setSegment = useCallback((segment: string) => {
+    setState((prev) => ({
+      ...prev,
+      segment,
+      make: "",
+      emission: "",
+      selectedFamily: "",
+    }));
+    setError(null);
+  }, []);
+
+  const setMake = useCallback((make: string) => {
+    setState((prev) => ({
+      ...prev,
+      make: canonicalMake(prev.segment, make),
+      emission: "",
+      selectedFamily: "",
+    }));
+    setError(null);
+  }, []);
+
+  const setEmission = useCallback((emission: string) => {
+    setState((prev) => ({ ...prev, emission, selectedFamily: "" }));
+    setError(null);
+  }, []);
+
+  const toggleNeed = useCallback((value: string, checked: boolean) => {
+    setState((prev) => ({
+      ...prev,
+      selectedNeeds: checked
+        ? [...prev.selectedNeeds, value]
+        : prev.selectedNeeds.filter((item) => item !== value),
+      selectedFamily: "",
+    }));
+  }, []);
+
+  const isNeedChecked = useCallback(
+    (value: string) => {
+      if (state.selectedNeeds.includes(value)) return true;
+      const aliases = NEED_ALIASES[value];
+      return Boolean(
+        aliases && aliases.every((key) => expandedNeeds.includes(key))
+      );
+    },
+    [state.selectedNeeds, expandedNeeds]
+  );
+
+  const validateAndRecommend = useCallback(() => {
+    if (!state.segment || !state.make || !state.emission) {
+      setError(
+        "Choose the vehicle type, manufacturer and emission / powertrain."
+      );
+      return false;
+    }
+    setError(null);
+    setCartSuccess(null);
+    update({ step: 2, aisRequired: state.aisRequired ?? false });
+    return true;
+  }, [state, update]);
+
+  const goToStep = useCallback((step: 1 | 2) => {
+    setState((prev) => ({ ...prev, step }));
+    if (step === 1) setCartSuccess(null);
+  }, []);
+
+  const reset = useCallback(() => {
+    setState(defaultState);
+    setError(null);
+    setCartSuccess(null);
+  }, []);
+
+  const selectFamily = useCallback((family: PlanFamily) => {
+    setState((prev) => ({ ...prev, selectedFamily: family }));
+    setCartSuccess(null);
+  }, []);
+
+  const setAisRequired = useCallback((aisRequired: boolean) => {
+    setState((prev) => ({
+      ...prev,
+      aisRequired,
+      stateId: aisRequired ? prev.stateId : "",
+      selectedFamily: prev.selectedFamily,
+    }));
+    setCartSuccess(null);
+  }, []);
+
+  const setStateId = useCallback((stateId: string) => {
+    setState((prev) => ({ ...prev, stateId }));
+    setCartSuccess(null);
+  }, []);
+
+  const setQuantity = useCallback((quantity: number) => {
+    setState((prev) => ({
+      ...prev,
+      quantity: Math.max(1, Math.floor(quantity) || 1),
+    }));
+  }, []);
+
+  const getBadge = useCallback(
+    (
+      rec: RecommendationResult["recommendations"][number],
+      total: number,
+      recResult: RecommendationResult
+    ) => {
+      const best = Boolean(
+        highlightedFamily(recResult) && rec.family === highlightedFamily(recResult)
+      );
+      if (best) return { label: "Best Value", variant: "value" as const };
+      if (expandedNeeds.length) {
+        return {
+          label: rec.completeMatch ? "Fits your needs" : "Partial match",
+          variant: rec.completeMatch ? ("match" as const) : ("partial" as const),
+        };
+      }
+      if (total <= 1) return null;
+      return { label: "Compatible", variant: "match" as const };
+    },
+    [expandedNeeds, highlightedFamily]
+  );
+
+  const purchaseSelected = useCallback(() => {
+    if (!result || result.status !== "VERIFIED" || !selectedRecommendation) return;
+
+    const rec = selectedRecommendation;
+    const product = productFor(rec.family as PlanFamily, state.aisRequired);
+    if (!product) return;
+
+    const cov = coverageStatus(state.aisRequired, state.stateId);
+    if (state.aisRequired && !state.stateId) return;
+    if (cov.status === "unavailable") return;
+
+    const qty = Math.max(1, state.quantity);
+    const meta = planMeta[rec.family as PlanFamily];
+    const line: CartLine = {
+      id: `cfg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      sku: product.sku,
+      family: rec.family as PlanFamily,
+      planName: product.name,
+      line: variantLabel(state.aisRequired),
+      quantity: qty,
+      unitPrice: product.price,
+      segment: state.segment,
+      segmentLabel: result.summary.segmentLabel,
+      make: state.make,
+      manufacturerLabel: result.summary.manufacturerLabel,
+      emission: state.emission,
+      aisRequired: state.aisRequired,
+      stateId: state.stateId,
+      stateLabel:
+        INDIA_REGIONS.find((r) => r.id === state.stateId)?.label || "",
+      hardware: meta.hardware[state.aisRequired ? "ais" : "standard"] || meta.hardware.standard,
+      source: variant === "modal" ? "modal-configurator" : "homepage-configurator",
+      createdAt: Date.now(),
+    };
+
+    if (product.purchase === "buy") {
+      addToConfiguredCart(line);
+      setCartSuccess({
+        title: `${qty} × ${product.name}`,
+        summary: `${result.summary.manufacturerLabel} · ${result.summary.emission} · ${variantLabel(state.aisRequired)}`,
+      });
+      onAddedToCart?.();
+      return;
+    }
+
+    saveQuoteContext(line);
+    window.location.href = "/get-a-quote?source=homepage-configurator";
+  }, [result, selectedRecommendation, state, variant, onAddedToCart]);
+
+  const requestInVisionQuote = useCallback(() => {
+    if (!result || result.status !== "VERIFIED") return;
+    const product = productFor("invision", false);
+    if (!product) return;
+
+    const qty = Math.max(1, state.quantity);
+    saveQuoteContext({
+      id: `cfg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      sku: product.sku,
+      family: "invision",
+      planName: "InVision",
+      line: "Standard",
+      quantity: qty,
+      unitPrice: product.price,
+      segment: state.segment,
+      segmentLabel: result.summary.segmentLabel,
+      make: state.make,
+      manufacturerLabel: result.summary.manufacturerLabel,
+      emission: state.emission,
+      aisRequired: false,
+      stateId: "",
+      stateLabel: "",
+      hardware: planMeta.invision.hardware.standard,
+      source: variant === "modal" ? "modal-configurator" : "homepage-configurator",
+      createdAt: Date.now(),
+    });
+    window.location.href = "/get-a-quote?source=homepage-configurator";
+  }, [result, state, variant]);
+
+  return {
+    state,
+    error,
+    hydrated,
+    result,
+    segmentOptions,
+    makeOptions,
+    emissionOptions,
+    summaryText,
+    resultsTitle,
+    resultsCopy,
+    availabilityNotices,
+    selectedRecommendation,
+    cartSuccess,
+    expandedNeeds,
+    update,
+    setSegment,
+    setMake,
+    setEmission,
+    toggleNeed,
+    isNeedChecked,
+    validateAndRecommend,
+    goToStep,
+    reset,
+    selectFamily,
+    setAisRequired,
+    setStateId,
+    setQuantity,
+    getBadge,
+    purchaseSelected,
+    requestInVisionQuote,
+    coverageStatus: () => coverageStatus(state.aisRequired, state.stateId),
+    cumulativeCapabilities,
+    formatMoney,
+    productFor,
+    highlightedFamily,
+  };
+}
+
+export type PlanFinderController = ReturnType<typeof usePlanFinder>;

@@ -1,0 +1,490 @@
+"use client";
+
+import type { CSSProperties } from "react";
+import Image from "next/image";
+import Link from "next/link";
+
+import { planFinderSection } from "@/config/plan-finder";
+import { planAccentTokens } from "@/config/plans";
+import {
+  CAP_LABELS,
+  INDIA_REGIONS,
+  NEED_SHORT_LABELS,
+  planMeta,
+  productFor,
+  type RecommendationResult,
+} from "@/lib/plan-finder";
+import type { PlanFamily } from "@/lib/plan-finder";
+import { cn } from "@/lib/utils";
+
+import { PlanBadge } from "./plan-badge";
+import type { PlanFinderController } from "./use-plan-finder";
+
+type PlanDetailPanelProps = {
+  finder: PlanFinderController;
+};
+
+export function PlanDetailPanel({ finder }: PlanDetailPanelProps) {
+  const { state, result, selectedRecommendation, cartSuccess } = finder;
+
+  if (!result || result.status !== "VERIFIED" || !selectedRecommendation) {
+    return null;
+  }
+
+  const family = selectedRecommendation.family as PlanFamily;
+  const meta = planMeta[family];
+  const tokens = planAccentTokens[family === "invisionplus" ? "invisionplus" : family];
+  const product = productFor(family, state.aisRequired);
+  const stdProduct = productFor(family, false);
+  const aisProduct = productFor(family, true);
+  const cov = finder.coverageStatus();
+  const canProceed =
+    !state.aisRequired || cov.status === "ready" || cov.status === "confirm";
+  const badge = finder.getBadge(selectedRecommendation, result.recommendations.length, result);
+  const qty = Math.max(1, state.quantity);
+  const total = (product?.price || 0) * qty;
+
+  const hasNeeds = finder.expandedNeeds.length > 0;
+  const fitCopy = hasNeeds
+    ? selectedRecommendation.completeMatch
+      ? "✓ Covers everything you selected"
+      : "Vehicle compatible, but it does not cover everything you selected"
+    : `✓ Fits ${result.summary.manufacturerLabel} · ${result.summary.emission}`;
+
+  const needMessage =
+    hasNeeds && !selectedRecommendation.completeMatch
+      ? "This plan does not include all the features you selected."
+      : "";
+
+  const coverageMessage = [
+    needMessage,
+    state.aisRequired ? cov.copy : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  if (family === "invision") {
+    let invisionFit = `✓ Camera-only option for ${result.summary.manufacturerLabel} · ${result.summary.emission}`;
+    let invisionMessage: string = planFinderSection.commerce.invisionMessage;
+
+    if (hasNeeds) {
+      if (selectedRecommendation.completeMatch) {
+        invisionFit = "✓ Covers the Video safety need you selected";
+      } else {
+        const missing = (selectedRecommendation.unmetNeeds || []).map(
+          (key) => NEED_SHORT_LABELS[key] || key
+        );
+        invisionFit = "Covers Video safety only";
+        invisionMessage = `InVision does not cover all selected needs${missing.length ? `: ${missing.join(", ")}` : ""}. Choose an OBD-enabled plan if you need those capabilities as well.`;
+      }
+    }
+
+    const invisionProduct = productFor("invision", false);
+
+    return (
+      <InVisionDetail
+        badge={badge}
+        fitCopy={invisionFit}
+        message={invisionMessage}
+        qty={qty}
+        total={(invisionProduct?.price || 0) * qty}
+        unitPrice={invisionProduct?.price || 0}
+        onDec={() => finder.setQuantity(qty - 1)}
+        onInc={() => finder.setQuantity(qty + 1)}
+        onQtyChange={(value) => finder.setQuantity(value)}
+        onQuote={finder.requestInVisionQuote}
+        tokens={tokens}
+      />
+    );
+  }
+
+  const caps = finder.cumulativeCapabilities(family);
+  const purchaseLabel = product?.purchase === "buy" ? "Add to cart" : "Get a quote";
+
+  return (
+    <article
+      className={cn("grid min-h-full overflow-hidden rounded-[20px] border border-[#cfdee5] bg-white shadow-[0_14px_34px_rgba(20,52,68,0.07)] max-[1050px]:grid-cols-1 min-[1051px]:grid-cols-[minmax(0,1.03fr)_minmax(320px,0.72fr)]")}
+      style={{ "--accent": tokens.accent } as CSSProperties}
+    >
+      <div className="relative flex min-w-0 flex-col justify-start px-[26px] pt-[26px] pb-[22px] before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-[var(--accent)] max-[760px]:px-[19px] max-[760px]:pt-[21px] max-[760px]:pb-[17px]">
+        <div className="flex flex-wrap items-start gap-[9px]">
+          <span className="text-[10px] leading-none font-semibold tracking-[0.07em] text-[var(--accent)] uppercase">
+            {meta.value}
+          </span>
+          {badge ? <PlanBadge label={badge.label} variant={badge.variant} /> : null}
+        </div>
+        <h4 className="mt-2 mb-0 text-[36px] leading-none font-medium tracking-[-0.045em] text-[#15343f] max-[760px]:text-[31px]">
+          {meta.name}
+        </h4>
+        <p className="mt-[9px] mb-0 max-w-[560px] text-[13.5px] leading-[1.45] text-[#5f7480]">
+          {meta.desc}
+        </p>
+        <div className="mt-[13px] text-[11.5px] font-medium text-[#2f7057]">{fitCopy}</div>
+        <div className="mt-[18px] grid gap-2">
+          {meta.key.map((feature) => (
+            <div
+              key={feature}
+              className="flex items-center gap-[9px] text-[12.5px] font-medium text-[#38535f]"
+            >
+              <span className="grid size-5 place-items-center rounded-full bg-[color-mix(in_srgb,var(--accent)_10%,#fff)] text-[10px] text-[var(--accent)]">
+                ✓
+              </span>
+              {feature}
+            </div>
+          ))}
+        </div>
+        <details className="mt-[18px] border-t border-[#e3eaed]">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between text-[11.5px] font-semibold text-[#1767ad] [&::-webkit-details-marker]:hidden after:text-lg after:font-normal after:content-['+'] open:after:content-['−']">
+            {planFinderSection.commerce.featuresSummary}
+          </summary>
+          <div className="pb-1">
+            <div className="grid grid-cols-2 gap-x-3.5 gap-y-1.5 max-[760px]:grid-cols-1">
+              {caps.map((capability) => (
+                <span
+                  key={capability}
+                  className="relative pl-3 text-[10.5px] leading-[1.35] text-[#566d77] before:absolute before:top-[0.48em] before:left-0 before:size-1 before:rounded-full before:bg-[var(--accent)] before:content-['']"
+                >
+                  {CAP_LABELS[capability] || capability}
+                </span>
+              ))}
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <aside className="flex min-w-0 flex-col border-[#d8e4e9] bg-[linear-gradient(180deg,#f5f9fb_0%,#eef5f8_100%)] max-[1050px]:border-t max-[1050px]:border-l-0 min-[1051px]:border-l">
+        <div className="relative h-[158px] overflow-hidden bg-[#e5eef3] max-[1050px]:h-[130px] max-[760px]:h-[135px]">
+          <Image src={meta.art} alt="" fill className="object-cover" sizes="400px" />
+        </div>
+        <div className="flex flex-1 flex-col p-[18px] max-[1050px]:p-[15px]">
+          {!cartSuccess ? (
+            <div>
+              <div className="flex items-end justify-between gap-3 max-[760px]:flex-col max-[760px]:items-start max-[760px]:gap-[3px]">
+                <span className="text-xs font-semibold text-[#233f4b]">
+                  {planFinderSection.commerce.aisHeadline}
+                </span>
+                <small className="text-[9.5px] text-[#7a8c95] max-[760px]:text-left min-[761px]:text-right">
+                  {planFinderSection.commerce.priceNote}
+                </small>
+              </div>
+              <div className="mt-[9px] grid grid-cols-2 gap-[7px]" role="group" aria-label={planFinderSection.commerce.aisHeadline}>
+                <button
+                  type="button"
+                  className={cn(
+                    "min-h-[58px] cursor-pointer rounded-xl border px-[11px] py-[9px] text-left",
+                    state.aisRequired
+                      ? "border-[var(--accent)] bg-white shadow-[0_0_0_2px_color-mix(in_srgb,var(--accent)_10%,transparent)]"
+                      : "border-[#ccdce3] bg-white text-[#415b66]"
+                  )}
+                  onClick={() => finder.setAisRequired(true)}
+                >
+                  <span className="block text-[9.5px]">AIS-140 Certified</span>
+                  <strong className="mt-1 block text-base font-semibold text-[#173844]">
+                    {finder.formatMoney(aisProduct?.price || 0)}
+                  </strong>
+                </button>
+                <button
+                  type="button"
+                  className={cn(
+                    "min-h-[58px] cursor-pointer rounded-xl border px-[11px] py-[9px] text-left",
+                    !state.aisRequired
+                      ? "border-[var(--accent)] bg-white shadow-[0_0_0_2px_color-mix(in_srgb,var(--accent)_10%,transparent)]"
+                      : "border-[#ccdce3] bg-white text-[#415b66]"
+                  )}
+                  onClick={() => finder.setAisRequired(false)}
+                >
+                  <span className="block text-[9.5px]">Standard</span>
+                  <strong className="mt-1 block text-base font-semibold text-[#173844]">
+                    {finder.formatMoney(stdProduct?.price || 0)}
+                  </strong>
+                </button>
+              </div>
+
+              {state.aisRequired ? (
+                <div className="mt-[9px]">
+                  <label
+                    htmlFor="plan-finder-state"
+                    className="mb-[5px] block text-[10px] font-semibold text-[#627680]"
+                  >
+                    {planFinderSection.commerce.stateLabel}
+                  </label>
+                  <select
+                    id="plan-finder-state"
+                    value={state.stateId}
+                    onChange={(event) => finder.setStateId(event.target.value)}
+                    className="h-[38px] w-full rounded-[9px] border border-[#c8d8df] bg-white px-2.5 text-[11px] text-[#29434f]"
+                  >
+                    <option value="">{planFinderSection.commerce.statePlaceholder}</option>
+                    {INDIA_REGIONS.map((region) => (
+                      <option key={region.id} value={region.id}>
+                        {region.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : null}
+
+              <div className="mt-auto grid grid-cols-[104px_minmax(0,1fr)] items-end gap-2 pt-3.5 max-[760px]:grid-cols-[98px_minmax(0,1fr)]">
+                <label>
+                  <span className="mb-[5px] block text-[9.5px] font-semibold tracking-[0.05em] text-[#637780] uppercase">
+                    {planFinderSection.commerce.devicesLabel}
+                  </span>
+                  <div className="grid h-12 grid-cols-[28px_1fr_28px] overflow-hidden rounded-[11px] border border-[#c7d8df] bg-white">
+                    <button
+                      type="button"
+                      aria-label="Decrease quantity"
+                      className="cursor-pointer border-0 bg-transparent text-base text-[#45606b]"
+                      onClick={() => finder.setQuantity(qty - 1)}
+                    >
+                      −
+                    </button>
+                    <input
+                      type="number"
+                      min={1}
+                      step={1}
+                      inputMode="numeric"
+                      aria-label="Number of devices"
+                      value={qty}
+                      onChange={(event) => finder.setQuantity(Number(event.target.value))}
+                      className="min-w-0 w-full border-0 bg-transparent text-center text-[13px] font-semibold text-[#173844] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                    />
+                    <button
+                      type="button"
+                      aria-label="Increase quantity"
+                      className="cursor-pointer border-0 bg-transparent text-base text-[#45606b]"
+                      onClick={() => finder.setQuantity(qty + 1)}
+                    >
+                      +
+                    </button>
+                  </div>
+                </label>
+                <button
+                  type="button"
+                  disabled={!canProceed}
+                  className="h-12 cursor-pointer rounded-[11px] border-0 bg-[#176fc0] text-[13px] font-semibold text-white shadow-[0_8px_18px_rgba(23,111,192,0.18)] hover:bg-[#0e61ae] disabled:cursor-not-allowed disabled:opacity-[0.48]"
+                  onClick={finder.purchaseSelected}
+                >
+                  {purchaseLabel}
+                </button>
+              </div>
+
+              <div
+                aria-live="polite"
+                className="mt-3.5 flex items-center justify-between gap-5 rounded-[13px] border border-[#d6e2ef] bg-[linear-gradient(135deg,#f7faff_0%,#eef5fd_100%)] px-4 py-[15px] shadow-[inset_0_1px_0_rgba(255,255,255,0.86)] max-[560px]:gap-3 max-[560px]:px-3.5"
+              >
+                <div className="min-w-0">
+                  <span className="block text-[13px] leading-[1.25] font-semibold text-[#263b48]">
+                    Total for {qty} {qty === 1 ? "device" : "devices"}
+                  </span>
+                  <small className="mt-1 block text-[11.5px] leading-[1.3] text-[#70808a]">
+                    {planFinderSection.commerce.totalNote}
+                  </small>
+                </div>
+                <strong className="shrink-0 text-[22px] leading-none font-semibold tracking-[-0.025em] text-[#123f70] max-[560px]:text-xl">
+                  {finder.formatMoney(total)}
+                </strong>
+              </div>
+
+              {coverageMessage ? (
+                <p className="mt-2 min-h-3.5 text-[9.5px] leading-[1.35] text-[#667b85]">
+                  {coverageMessage}
+                </p>
+              ) : null}
+            </div>
+          ) : (
+            <CartSuccess
+              title={cartSuccess.title}
+              summary={cartSuccess.summary}
+              onAnother={finder.reset}
+            />
+          )}
+        </div>
+      </aside>
+    </article>
+  );
+}
+
+function CartSuccess({
+  title,
+  summary,
+  onAnother,
+}: {
+  title: string;
+  summary: string;
+  onAnother: () => void;
+}) {
+  return (
+    <div className="grid min-h-[214px] grid-cols-[46px_minmax(0,1fr)] content-center gap-[13px] px-0.5 py-1 max-[760px]:grid-cols-[42px_minmax(0,1fr)] max-[760px]:gap-[11px] max-[1050px]:min-h-0 max-[1050px]:py-[5px]">
+      <div
+        aria-hidden="true"
+        className="grid size-[46px] place-items-center rounded-[15px] border border-[#c6e7d8] bg-[linear-gradient(145deg,#e8f7f0,#d7f1e5)] text-[22px] font-medium text-[#24745c] shadow-[0_8px_18px_rgba(36,116,92,0.10)] max-[760px]:size-[42px] max-[760px]:rounded-[13px] max-[760px]:text-xl"
+      >
+        ✓
+      </div>
+      <div className="min-w-0 pt-px">
+        <span className="block text-[11px] font-semibold tracking-[0.05em] text-[#24745c] uppercase">
+          {planFinderSection.commerce.cartSuccessKicker}
+        </span>
+        <h5 className="mt-1 mb-0 text-2xl leading-[1.1] font-medium tracking-[-0.025em] text-[#173844] max-[760px]:text-[21px]">
+          {title}
+        </h5>
+        <p className="mt-1.5 mb-0 text-[12.5px] leading-[1.45] font-normal wrap-anywhere text-[#617781]">
+          {summary}
+        </p>
+      </div>
+      <div className="col-span-full mt-1.5 grid grid-cols-[minmax(0,1fr)_minmax(0,1.08fr)] gap-2 max-[760px]:grid-cols-1 max-[1050px]:grid-cols-2">
+        <button
+          type="button"
+          className="flex min-h-[46px] cursor-pointer items-center justify-center rounded-[11px] border border-[#bfd0d8] bg-white px-[15px] text-[13px] font-semibold whitespace-nowrap text-[#1767ad] hover:border-[#9fbac6] hover:bg-[#f5f9fb] max-[420px]:px-3 max-[420px]:text-[12.5px]"
+          onClick={onAnother}
+        >
+          {planFinderSection.commerce.cartAnotherLabel}
+        </button>
+        <Link
+          href="/cart"
+          className="flex min-h-[46px] items-center justify-center gap-[9px] rounded-[11px] border border-[#176fc0] bg-[#176fc0] px-[15px] text-[13px] font-semibold text-white no-underline shadow-[0_8px_18px_rgba(23,111,192,0.17)] hover:border-[#0e61ae] hover:bg-[#0e61ae]"
+        >
+          {planFinderSection.commerce.cartViewLabel}
+          <span aria-hidden="true" className="text-base font-normal">
+            →
+          </span>
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function InVisionDetail({
+  badge,
+  fitCopy,
+  message,
+  qty,
+  total,
+  unitPrice,
+  onDec,
+  onInc,
+  onQtyChange,
+  onQuote,
+  tokens,
+}: {
+  badge: { label: string; variant: "value" | "match" | "partial" } | null;
+  fitCopy: string;
+  message: string;
+  qty: number;
+  total: number;
+  unitPrice: number;
+  onDec: () => void;
+  onInc: () => void;
+  onQtyChange: (value: number) => void;
+  onQuote: () => void;
+  tokens: { accent: string };
+}) {
+  return (
+    <article
+      className="grid min-h-full overflow-hidden rounded-[20px] border border-[#cfdee5] bg-white shadow-[0_14px_34px_rgba(20,52,68,0.07)] max-[1050px]:grid-cols-1 min-[1051px]:grid-cols-[minmax(0,1.03fr)_minmax(320px,0.72fr)]"
+      style={{ "--accent": tokens.accent } as CSSProperties}
+    >
+      <div className="relative flex min-w-0 flex-col justify-start px-[26px] pt-[26px] pb-[22px] before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-[var(--accent)]">
+        <div className="flex flex-wrap items-start gap-[9px]">
+          <span className="text-[10px] leading-none font-semibold tracking-[0.07em] text-[var(--accent)] uppercase">
+            Camera-only
+          </span>
+          {badge ? <PlanBadge label={badge.label} variant={badge.variant} /> : null}
+        </div>
+        <h4 className="mt-2 mb-0 text-[36px] leading-none font-medium tracking-[-0.045em] text-[#15343f]">
+          InVision
+        </h4>
+        <p className="mt-[9px] mb-0 max-w-[560px] text-[13.5px] leading-[1.45] text-[#5f7480]">
+          AI-Driven Video Telematics without tracking, fuel monitoring or predictive vehicle health.
+        </p>
+        <div className="mt-[13px] text-[11.5px] font-medium text-[#2f7057]">{fitCopy}</div>
+        <div className="mt-[18px] grid gap-2">
+          {planMeta.invision.key.map((feature) => (
+            <div key={feature} className="flex items-center gap-[9px] text-[12.5px] font-medium text-[#38535f]">
+              <span className="grid size-5 place-items-center rounded-full bg-[color-mix(in_srgb,var(--accent)_10%,#fff)] text-[10px] text-[var(--accent)]">
+                ✓
+              </span>
+              {feature}
+            </div>
+          ))}
+        </div>
+        <p className="mt-4 text-[9.5px] leading-[1.35] text-[#667b85]">{message}</p>
+      </div>
+      <aside className="flex min-w-0 flex-col border-[#d8e4e9] bg-[linear-gradient(180deg,#f5f9fb_0%,#eef5f8_100%)] max-[1050px]:border-t min-[1051px]:border-l">
+        <div className="relative h-[158px] overflow-hidden bg-[#e5eef3]">
+          <Image
+            src={planMeta.invision.art}
+            alt=""
+            fill
+            className="object-cover"
+            sizes="400px"
+          />
+        </div>
+        <div className="flex flex-1 flex-col p-[18px]">
+          <div className="flex items-end justify-between gap-3">
+            <span className="text-xs font-semibold text-[#233f4b]">
+              {planFinderSection.commerce.invisionRouteHead}
+            </span>
+            <small className="text-[9.5px] text-[#7a8c95]">
+              {planFinderSection.commerce.priceNote}
+            </small>
+          </div>
+          <div className="mt-[9px]">
+            <button
+              type="button"
+              disabled
+              className="min-h-[58px] w-full cursor-default rounded-xl border border-[var(--accent)] bg-white px-[11px] py-[9px] text-left shadow-[0_0_0_2px_color-mix(in_srgb,var(--accent)_10%,transparent)]"
+            >
+              <span className="block text-[9.5px]">InVision</span>
+              <strong className="mt-1 block text-base font-semibold text-[#173844]">
+                ₹{unitPrice.toLocaleString("en-IN")}
+              </strong>
+            </button>
+          </div>
+          <div className="mt-auto grid grid-cols-[104px_minmax(0,1fr)] items-end gap-2 pt-3.5">
+            <label>
+              <span className="mb-[5px] block text-[9.5px] font-semibold tracking-[0.05em] text-[#637780] uppercase">
+                {planFinderSection.commerce.devicesLabel}
+              </span>
+              <div className="grid h-12 grid-cols-[28px_1fr_28px] overflow-hidden rounded-[11px] border border-[#c7d8df] bg-white">
+                <button type="button" aria-label="Decrease quantity" className="cursor-pointer border-0 bg-transparent text-base text-[#45606b]" onClick={onDec}>
+                  −
+                </button>
+                <input
+                  type="number"
+                  min={1}
+                  value={qty}
+                  onChange={(event) => onQtyChange(Number(event.target.value))}
+                  className="min-w-0 w-full border-0 bg-transparent text-center text-[13px] font-semibold text-[#173844] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                />
+                <button type="button" aria-label="Increase quantity" className="cursor-pointer border-0 bg-transparent text-base text-[#45606b]" onClick={onInc}>
+                  +
+                </button>
+              </div>
+            </label>
+            <button
+              type="button"
+              className="h-12 cursor-pointer rounded-[11px] border-0 bg-[#176fc0] text-[13px] font-semibold text-white shadow-[0_8px_18px_rgba(23,111,192,0.18)] hover:bg-[#0e61ae]"
+              onClick={onQuote}
+            >
+              Get a quote
+            </button>
+          </div>
+          <div className="mt-3.5 flex items-center justify-between gap-5 rounded-[13px] border border-[#d6e2ef] bg-[linear-gradient(135deg,#f7faff_0%,#eef5fd_100%)] px-4 py-[15px]">
+            <div>
+              <span className="block text-[13px] font-semibold text-[#263b48]">
+                Total for {qty} {qty === 1 ? "device" : "devices"}
+              </span>
+              <small className="mt-1 block text-[11.5px] text-[#70808a]">
+                {planFinderSection.commerce.totalNote}
+              </small>
+            </div>
+            <strong className="text-[22px] font-semibold text-[#123f70]">
+              ₹{total.toLocaleString("en-IN")}
+            </strong>
+          </div>
+        </div>
+      </aside>
+    </article>
+  );
+}
