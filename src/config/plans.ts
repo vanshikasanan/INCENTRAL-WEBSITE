@@ -3,12 +3,15 @@ export type PlanVariant = {
   href: string;
 };
 
-export type PlanAccent =
-  | "incert"
-  | "insight"
-  | "ingenious"
-  | "invisionplus"
-  | "invision";
+export type PlanAccent = "incert" | "insight" | "ingenious" | "invisionplus";
+
+/** v375 h139-card family class on homepage solution cards */
+export const planShowcaseCardClass: Record<PlanAccent, string> = {
+  incert: "",
+  insight: "h139-insight",
+  ingenious: "h139-ingenious",
+  invisionplus: "h139-invision",
+};
 
 export type PlanAccentToken = {
   accent: string;
@@ -38,10 +41,36 @@ export const planAccentTokens: Record<PlanAccent, PlanAccentToken> = {
     tint: "#f1f0fa",
     markShadow: "0 0 0 4px color-mix(in srgb, #4a3fa5 10%, transparent)",
   },
-  invision: {
-    accent: "#58728f",
-    tint: "#f0f4f7",
-    markShadow: "0 0 0 4px color-mix(in srgb, #58728f 10%, transparent)",
+};
+
+/** Navigation mega menu — v375 pass 179 blue hierarchy */
+export const planMegaMenuAccentTokens: Record<
+  PlanAccent,
+  { accent: string; tint: string; megaClass: string; mobileClass: string }
+> = {
+  incert: {
+    accent: "#7bb9e9",
+    tint: "#f3f8fd",
+    megaClass: "inc-mega-incert",
+    mobileClass: "inc-mobile-incert",
+  },
+  insight: {
+    accent: "#458ed0",
+    tint: "#eef5fb",
+    megaClass: "inc-mega-insight",
+    mobileClass: "inc-mobile-insight",
+  },
+  ingenious: {
+    accent: "#1f68b0",
+    tint: "#ebf2f9",
+    megaClass: "inc-mega-ingenious",
+    mobileClass: "inc-mobile-ingenious",
+  },
+  invisionplus: {
+    accent: "#0a3c73",
+    tint: "#e7eef6",
+    megaClass: "inc-mega-invisionplus",
+    mobileClass: "inc-mobile-invisionplus",
   },
 };
 
@@ -56,12 +85,12 @@ export type PlanProduct = {
 };
 
 export const plansMega = {
-  kicker: "Plans",
-  title: "Explore the plan range",
+  kicker: "Solutions",
+  title: "Explore the solution range",
   description:
-    "Review product details or find the right plan for your fleet.",
+    "Review product details or find the right solution for your fleet.",
   cta: {
-    label: "Find the right plan",
+    label: "Find the right solution",
     href: "/#check-compatibility",
   },
 } as const;
@@ -102,11 +131,11 @@ export const planShowcaseCards: PlanShowcaseCard[] = [
   {
     id: "incert",
     accent: "incert",
-    value: "Compliance",
+    value: "Tracking",
     number: "01",
     image: "/images/hero/hero-incert-concept.webp",
     name: "InCert",
-    tagline: "Stay compliant. Stay in control.",
+    tagline: "Stay visible. Stay in control.",
     href: planHref("incert"),
     features: [
       { icon: "route", label: "Location, Trips & Geofencing" },
@@ -117,7 +146,7 @@ export const planShowcaseCards: PlanShowcaseCard[] = [
   {
     id: "insight",
     accent: "insight",
-    value: "Compliance + Cost",
+    value: "Fuel & repair",
     number: "02",
     image: "/images/hero/hero-insight-concept.webp",
     name: "InSight",
@@ -125,14 +154,14 @@ export const planShowcaseCards: PlanShowcaseCard[] = [
     href: planHref("insight"),
     features: [
       { icon: "fuel", label: "Fuel Consumption Insights" },
-      { icon: "fault", label: "Fault-Code Visibility" },
-      { icon: "repair", label: "Guided Repair" },
+      { icon: "fault", label: "Vehicle Fault Codes" },
+      { icon: "repair", label: "Repair Guidance" },
     ],
   },
   {
     id: "ingenious",
     accent: "ingenious",
-    value: "Compliance + Cost + Productivity",
+    value: "Predictive health",
     number: "03",
     image: "/images/hero/hero-ingenious-concept.webp",
     name: "InGenious",
@@ -140,14 +169,14 @@ export const planShowcaseCards: PlanShowcaseCard[] = [
     href: planHref("ingenious"),
     features: [
       { icon: "health", label: "Predictive Vehicle Health" },
-      { icon: "automation", label: "Operations Automation" },
+      { icon: "automation", label: "Automated Fleet Tasks" },
       { icon: "analytics", label: "Full Fuel Management" },
     ],
   },
   {
     id: "invision-plus",
     accent: "invisionplus",
-    value: "Compliance + Cost + Productivity + Safety",
+    value: "Predictive + video",
     number: "04",
     image: "/images/hero/hero-invisionplus-concept.webp",
     name: "InVision+",
@@ -162,32 +191,15 @@ export const planShowcaseCards: PlanShowcaseCard[] = [
   },
 ];
 
-/** Camera-only plan card — use when a five-plan grid is needed. */
-export const planShowcaseInVisionCard: PlanShowcaseCard = {
-  id: "invision",
-  accent: "invision",
-  value: "Video telematics",
-  number: "05",
-  image: "/images/hero/hero-invision-concept.webp",
-  name: "InVision",
-  tagline:
-    "AI-Driven Video Telematics without OBD-dependent tracking, fuel and predictive health layers.",
-  href: planHref("invision"),
-  features: [
-    { icon: "camera", label: "AI-Driven Video Telematics" },
-    { icon: "dual", label: "Dual-Camera Visibility" },
-    { icon: "cabin", label: "In-Cabin Alerts" },
-  ],
-};
-
 export const plansSectionHome = {
-  id: "plans",
+  id: "solutions",
   titleId: "h139PlansTitle",
-  eyebrow: "Plans",
-  title: "Four plans. See which ones fit your fleet.",
+  eyebrow: "Solutions",
+  title: "Four solutions. See which ones fit your fleet.",
   description:
     "Start with tracking, then add fuel visibility, predictive vehicle health and AI-Driven Video Telematics as you move up the range.",
   cards: planShowcaseCards,
+  gridLabel: "Intangles plans",
 } as const;
 
 export const plansPage = {
@@ -209,24 +221,17 @@ export const plansPage = {
   },
   showcase: {
     titleId: "plansShowcaseTitle",
-    eyebrow: "Plan range",
-    title: "Four plans. See which ones fit your fleet.",
+    eyebrow: "Solutions",
+    title: "Four solutions. See which ones fit your fleet.",
     description: plansSectionHome.description,
     cards: planShowcaseCards,
     gridLabel: "Intangles plans",
   },
-  inVisionPromo: {
-    badge: "Camera-only option",
-    title: "Need camera-only AI-Driven Video Telematics?",
-    description:
-      "InVision is the separate Standard camera-only route without OBD-dependent tracking, fuel and predictive health layers.",
-    cta: { label: "View InVision", href: planHref("invision") },
-  },
   closeSection: {
-    eyebrow: "Find the right plan",
-    title: "Not sure which plan fits your fleet?",
+    eyebrow: "Find the right solution",
+    title: "Not sure which solution fits your fleet?",
     description:
-      "Tell us about your vehicles and needs. We will show the plans that fit.",
+      "Tell us about your vehicles and needs. We will show the solutions that fit.",
     primaryAction: plansMega.cta,
     secondaryAction: { label: "Contact Support", href: "/support" },
   },
@@ -237,7 +242,6 @@ export const planRouteIds = [
   "insight",
   "ingenious",
   "invision-plus",
-  "invision",
 ] as const;
 
 export type PlanRouteId = (typeof planRouteIds)[number];
@@ -257,7 +261,6 @@ export function getPlanProductById(id: PlanRouteId) {
 }
 
 export function getPlanShowcaseCardById(id: PlanRouteId) {
-  if (id === "invision") return planShowcaseInVisionCard;
   return planShowcaseCards.find((card) => card.id === id);
 }
 
@@ -312,15 +315,5 @@ export const planProducts: PlanProduct[] = [
       { label: "AIS-140 Certified", href: planHref("invision-plus", "ais") },
       { label: "Standard", href: planHref("invision-plus", "standard") },
     ],
-  },
-  {
-    id: "invision",
-    name: "InVision",
-    category: "Camera-only",
-    description:
-      "AI-Driven Video Telematics without the OBD-dependent tracking, fuel and predictive vehicle health layers.",
-    href: planHref("invision"),
-    accent: "invision",
-    variants: [{ label: "Standard", href: planHref("invision") }],
   },
 ];

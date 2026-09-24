@@ -27,6 +27,26 @@ const nextConfig: NextConfig = {
         destination: "/account",
         permanent: true,
       },
+      {
+        source: "/plans/invision",
+        destination: "/plans/invision-plus?line=standard",
+        permanent: true,
+      },
+      {
+        source: "/invision",
+        destination: "/plans/invision-plus?line=standard",
+        permanent: true,
+      },
+      {
+        source: "/compare-solutions.html",
+        destination: "/compare-solutions",
+        permanent: true,
+      },
+      {
+        source: "/cart.html",
+        destination: "/cart",
+        permanent: true,
+      },
     ];
   },
 };

@@ -7,12 +7,15 @@ export const notFoundPage = {
   },
   actions: {
     primary: { label: "Back to InCentral", href: "/" },
-    secondary: { label: "Find the right plan", href: "/#check-compatibility" },
+    secondary: {
+      label: "Find the right solution",
+      href: "/#check-compatibility",
+    },
   },
   shortcuts: {
     label: "Continue to",
     links: [
-      { label: "Plans", href: "/#plans" },
+      { label: "Solutions", href: "/#solutions" },
       { label: "Help", href: "/help" },
       { label: "Support", href: "/support" },
     ],

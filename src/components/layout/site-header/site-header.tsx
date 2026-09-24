@@ -10,6 +10,7 @@ import { NavLink } from "@/components/common/nav-link";
 import { headerActions, primaryNavLinks } from "@/config/navigation";
 import { siteConfig } from "@/config/site";
 import { useAuth } from "@/hooks/use-auth";
+import { useConfiguredCart } from "@/hooks/use-configured-cart";
 import { getHeaderAccountLink } from "@/lib/auth/nav-links";
 import { isNavLinkActive } from "@/lib/navigation-utils";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,7 @@ export function SiteHeader() {
   const desktopMegaBreakpoint = 1041;
   const pathname = usePathname();
   const { isAuthenticated } = useAuth();
+  const { deviceCount } = useConfiguredCart();
   const accountLink = getHeaderAccountLink(isAuthenticated);
   const plansMenuId = useId();
   const mobileMenuId = useId();
@@ -133,7 +135,7 @@ export function SiteHeader() {
                   plansOpen && "text-inc-nav-hover"
                 )}
               >
-                Plans
+                Solutions
                 <ChevronDown
                   className={cn(
                     "size-[13px] stroke-[1.7] transition-transform duration-[180ms]",
@@ -177,10 +179,10 @@ export function SiteHeader() {
             <ShoppingCart className="size-5 stroke-[1.8]" />
             <span
               data-inc-cart-count
-              hidden
+              hidden={deviceCount < 1}
               className="absolute -top-1.5 -right-1.5 h-6 min-w-6 rounded-full border-2 border-white bg-[#0b65c8] px-1.5 text-center text-[15px] leading-5 font-semibold text-white tabular-nums"
             >
-              0
+              {deviceCount}
             </span>
           </Link>
 

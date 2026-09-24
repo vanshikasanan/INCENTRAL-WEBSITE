@@ -4,7 +4,7 @@ import type { CSSProperties } from "react";
 
 import { planFinderSection } from "@/config/plan-finder";
 import { planAccentTokens } from "@/config/plans";
-import { planMeta, productFor } from "@/lib/plan-finder";
+import { planMeta, planValueLabel, productFor } from "@/lib/plan-finder";
 import type { PlanFamily } from "@/lib/plan-finder";
 import { cn } from "@/lib/utils";
 
@@ -125,7 +125,7 @@ export function ResultsStep({ finder, resultsTitleId }: ResultsStepProps) {
                 >
                   <span className="flex items-start justify-between gap-2">
                     <span className="text-[8.5px] leading-[1.3] font-semibold tracking-[0.05em] text-[#74858e] uppercase">
-                      {meta.value}
+                      {planValueLabel(family, state.aisRequired)}
                     </span>
                     {badge ? (
                       <PlanBadge

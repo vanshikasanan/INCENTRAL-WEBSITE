@@ -7,17 +7,18 @@ import Link from "next/link";
 import { planFinderSection } from "@/config/plan-finder";
 import { planAccentTokens } from "@/config/plans";
 import {
+  buildPlanNeedCopy,
   CAP_LABELS,
   INDIA_REGIONS,
-  NEED_SHORT_LABELS,
   planMeta,
+  planValueLabel,
   productFor,
-  type RecommendationResult,
 } from "@/lib/plan-finder";
 import type { PlanFamily } from "@/lib/plan-finder";
 import { cn } from "@/lib/utils";
 
 import { PlanBadge } from "./plan-badge";
+import { PlanWhySection } from "./plan-why-section";
 import type { PlanFinderController } from "./use-plan-finder";
 
 type PlanDetailPanelProps = {
@@ -45,61 +46,24 @@ export function PlanDetailPanel({ finder }: PlanDetailPanelProps) {
   const total = (product?.price || 0) * qty;
 
   const hasNeeds = finder.expandedNeeds.length > 0;
+  const needCopy = buildPlanNeedCopy(
+    selectedRecommendation,
+    result,
+    finder.expandedNeeds
+  );
   const fitCopy = hasNeeds
-    ? selectedRecommendation.completeMatch
-      ? "✓ Covers everything you selected"
-      : "Vehicle compatible, but it does not cover everything you selected"
+    ? needCopy.fit || "✓ Compatible with your vehicle"
     : `✓ Fits ${result.summary.manufacturerLabel} · ${result.summary.emission}`;
 
-  const needMessage =
-    hasNeeds && !selectedRecommendation.completeMatch
-      ? "This plan does not include all the features you selected."
-      : "";
-
   const coverageMessage = [
-    needMessage,
+    finder.quoteThresholdNotice,
     state.aisRequired ? cov.copy : "",
   ]
     .filter(Boolean)
     .join(" ");
 
-  if (family === "invision") {
-    let invisionFit = `✓ Camera-only option for ${result.summary.manufacturerLabel} · ${result.summary.emission}`;
-    let invisionMessage: string = planFinderSection.commerce.invisionMessage;
-
-    if (hasNeeds) {
-      if (selectedRecommendation.completeMatch) {
-        invisionFit = "✓ Covers the Video safety need you selected";
-      } else {
-        const missing = (selectedRecommendation.unmetNeeds || []).map(
-          (key) => NEED_SHORT_LABELS[key] || key
-        );
-        invisionFit = "Covers Video safety only";
-        invisionMessage = `InVision does not cover all selected needs${missing.length ? `: ${missing.join(", ")}` : ""}. Choose an OBD-enabled plan if you need those capabilities as well.`;
-      }
-    }
-
-    const invisionProduct = productFor("invision", false);
-
-    return (
-      <InVisionDetail
-        badge={badge}
-        fitCopy={invisionFit}
-        message={invisionMessage}
-        qty={qty}
-        total={(invisionProduct?.price || 0) * qty}
-        unitPrice={invisionProduct?.price || 0}
-        onDec={() => finder.setQuantity(qty - 1)}
-        onInc={() => finder.setQuantity(qty + 1)}
-        onQtyChange={(value) => finder.setQuantity(value)}
-        onQuote={finder.requestInVisionQuote}
-        tokens={tokens}
-      />
-    );
-  }
-
   const caps = finder.cumulativeCapabilities(family);
-  const purchaseLabel = product?.purchase === "buy" ? "Add to cart" : "Get a quote";
+  const purchaseLabel = "Add to cart";
 
   return (
     <article
@@ -109,7 +73,7 @@ export function PlanDetailPanel({ finder }: PlanDetailPanelProps) {
       <div className="relative flex min-w-0 flex-col justify-start px-[26px] pt-[26px] pb-[22px] before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-[var(--accent)] max-[760px]:px-[19px] max-[760px]:pt-[21px] max-[760px]:pb-[17px]">
         <div className="flex flex-wrap items-start gap-[9px]">
           <span className="text-[10px] leading-none font-semibold tracking-[0.07em] text-[var(--accent)] uppercase">
-            {meta.value}
+            {planValueLabel(family, state.aisRequired)}
           </span>
           {badge ? <PlanBadge label={badge.label} variant={badge.variant} /> : null}
         </div>
@@ -120,6 +84,7 @@ export function PlanDetailPanel({ finder }: PlanDetailPanelProps) {
           {meta.desc}
         </p>
         <div className="mt-[13px] text-[11.5px] font-medium text-[#2f7057]">{fitCopy}</div>
+        <PlanWhySection copy={needCopy} />
         <div className="mt-[18px] grid gap-2">
           {meta.key.map((feature) => (
             <div
@@ -351,140 +316,5 @@ function CartSuccess({
         </Link>
       </div>
     </div>
-  );
-}
-
-function InVisionDetail({
-  badge,
-  fitCopy,
-  message,
-  qty,
-  total,
-  unitPrice,
-  onDec,
-  onInc,
-  onQtyChange,
-  onQuote,
-  tokens,
-}: {
-  badge: { label: string; variant: "value" | "match" | "partial" } | null;
-  fitCopy: string;
-  message: string;
-  qty: number;
-  total: number;
-  unitPrice: number;
-  onDec: () => void;
-  onInc: () => void;
-  onQtyChange: (value: number) => void;
-  onQuote: () => void;
-  tokens: { accent: string };
-}) {
-  return (
-    <article
-      className="grid min-h-full overflow-hidden rounded-[20px] border border-[#cfdee5] bg-white shadow-[0_14px_34px_rgba(20,52,68,0.07)] max-[1050px]:grid-cols-1 min-[1051px]:grid-cols-[minmax(0,1.03fr)_minmax(320px,0.72fr)]"
-      style={{ "--accent": tokens.accent } as CSSProperties}
-    >
-      <div className="relative flex min-w-0 flex-col justify-start px-[26px] pt-[26px] pb-[22px] before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-[var(--accent)]">
-        <div className="flex flex-wrap items-start gap-[9px]">
-          <span className="text-[10px] leading-none font-semibold tracking-[0.07em] text-[var(--accent)] uppercase">
-            Camera-only
-          </span>
-          {badge ? <PlanBadge label={badge.label} variant={badge.variant} /> : null}
-        </div>
-        <h4 className="mt-2 mb-0 text-[36px] leading-none font-medium tracking-[-0.045em] text-[#15343f]">
-          InVision
-        </h4>
-        <p className="mt-[9px] mb-0 max-w-[560px] text-[13.5px] leading-[1.45] text-[#5f7480]">
-          AI-Driven Video Telematics without tracking, fuel monitoring or predictive vehicle health.
-        </p>
-        <div className="mt-[13px] text-[11.5px] font-medium text-[#2f7057]">{fitCopy}</div>
-        <div className="mt-[18px] grid gap-2">
-          {planMeta.invision.key.map((feature) => (
-            <div key={feature} className="flex items-center gap-[9px] text-[12.5px] font-medium text-[#38535f]">
-              <span className="grid size-5 place-items-center rounded-full bg-[color-mix(in_srgb,var(--accent)_10%,#fff)] text-[10px] text-[var(--accent)]">
-                ✓
-              </span>
-              {feature}
-            </div>
-          ))}
-        </div>
-        <p className="mt-4 text-[9.5px] leading-[1.35] text-[#667b85]">{message}</p>
-      </div>
-      <aside className="flex min-w-0 flex-col border-[#d8e4e9] bg-[linear-gradient(180deg,#f5f9fb_0%,#eef5f8_100%)] max-[1050px]:border-t min-[1051px]:border-l">
-        <div className="relative h-[158px] overflow-hidden bg-[#e5eef3]">
-          <Image
-            src={planMeta.invision.art}
-            alt=""
-            fill
-            className="object-cover"
-            sizes="400px"
-          />
-        </div>
-        <div className="flex flex-1 flex-col p-[18px]">
-          <div className="flex items-end justify-between gap-3">
-            <span className="text-xs font-semibold text-[#233f4b]">
-              {planFinderSection.commerce.invisionRouteHead}
-            </span>
-            <small className="text-[9.5px] text-[#7a8c95]">
-              {planFinderSection.commerce.priceNote}
-            </small>
-          </div>
-          <div className="mt-[9px]">
-            <button
-              type="button"
-              disabled
-              className="min-h-[58px] w-full cursor-default rounded-xl border border-[var(--accent)] bg-white px-[11px] py-[9px] text-left shadow-[0_0_0_2px_color-mix(in_srgb,var(--accent)_10%,transparent)]"
-            >
-              <span className="block text-[9.5px]">InVision</span>
-              <strong className="mt-1 block text-base font-semibold text-[#173844]">
-                ₹{unitPrice.toLocaleString("en-IN")}
-              </strong>
-            </button>
-          </div>
-          <div className="mt-auto grid grid-cols-[104px_minmax(0,1fr)] items-end gap-2 pt-3.5">
-            <label>
-              <span className="mb-[5px] block text-[9.5px] font-semibold tracking-[0.05em] text-[#637780] uppercase">
-                {planFinderSection.commerce.devicesLabel}
-              </span>
-              <div className="grid h-12 grid-cols-[28px_1fr_28px] overflow-hidden rounded-[11px] border border-[#c7d8df] bg-white">
-                <button type="button" aria-label="Decrease quantity" className="cursor-pointer border-0 bg-transparent text-base text-[#45606b]" onClick={onDec}>
-                  −
-                </button>
-                <input
-                  type="number"
-                  min={1}
-                  value={qty}
-                  onChange={(event) => onQtyChange(Number(event.target.value))}
-                  className="min-w-0 w-full border-0 bg-transparent text-center text-[13px] font-semibold text-[#173844] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                />
-                <button type="button" aria-label="Increase quantity" className="cursor-pointer border-0 bg-transparent text-base text-[#45606b]" onClick={onInc}>
-                  +
-                </button>
-              </div>
-            </label>
-            <button
-              type="button"
-              className="h-12 cursor-pointer rounded-[11px] border-0 bg-[#176fc0] text-[13px] font-semibold text-white shadow-[0_8px_18px_rgba(23,111,192,0.18)] hover:bg-[#0e61ae]"
-              onClick={onQuote}
-            >
-              Get a quote
-            </button>
-          </div>
-          <div className="mt-3.5 flex items-center justify-between gap-5 rounded-[13px] border border-[#d6e2ef] bg-[linear-gradient(135deg,#f7faff_0%,#eef5fd_100%)] px-4 py-[15px]">
-            <div>
-              <span className="block text-[13px] font-semibold text-[#263b48]">
-                Total for {qty} {qty === 1 ? "device" : "devices"}
-              </span>
-              <small className="mt-1 block text-[11.5px] text-[#70808a]">
-                {planFinderSection.commerce.totalNote}
-              </small>
-            </div>
-            <strong className="text-[22px] font-semibold text-[#123f70]">
-              ₹{total.toLocaleString("en-IN")}
-            </strong>
-          </div>
-        </div>
-      </aside>
-    </article>
   );
 }

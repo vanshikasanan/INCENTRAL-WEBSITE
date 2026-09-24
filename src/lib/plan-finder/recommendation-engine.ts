@@ -12,7 +12,6 @@ const FAMILY_RANK: Record<PlanFamily, number> = {
   insight: 1,
   ingenious: 2,
   invisionplus: 3,
-  invision: 4,
 };
 
 const CAPABILITIES = {
@@ -42,43 +41,41 @@ const CAPABILITIES = {
     "driver_attendance_logging",
     "in_cabin_voice_alerts",
   ],
-  invision: [
-    "ai_driven_video_telematics",
-    "video_on_demand",
-    "passive_adas",
-    "driver_attendance_logging",
-    "in_cabin_voice_alerts",
-  ],
 } as const;
 
 export const NEEDS = {
   tracking: {
-    label: "Live vehicle tracking and trip management",
+    label: "Track vehicles and manage trips",
     minimumFamily: "incert" as PlanFamily,
     requires: ["real_time_location_tracking", "trip_management_geofencing"],
   },
   fuel_def: {
-    label: "Fuel consumption insights",
+    label: "Reduce fuel waste",
     minimumFamily: "insight" as PlanFamily,
     requires: ["fuel_consumption_insights"],
   },
-  diagnostics: {
-    label: "Vehicle fault codes and repair guidance",
+  repair_help: {
+    label: "Understand faults and repair needs",
     minimumFamily: "insight" as PlanFamily,
     requires: ["dtc_fault_code_visibility", "guided_repair_strategy"],
   },
   predictive_health: {
-    label: "Predictive vehicle health",
+    label: "Prevent unexpected breakdowns",
     minimumFamily: "ingenious" as PlanFamily,
     requires: ["predictive_vehicle_health"],
   },
   driver_behaviour: {
-    label: "Driver behaviour monitoring",
+    label: "Improve driver behaviour",
     minimumFamily: "incert" as PlanFamily,
     requires: ["driver_behaviour_alerts"],
   },
+  fleet_automation: {
+    label: "Run fleet operations more efficiently",
+    minimumFamily: "ingenious" as PlanFamily,
+    requires: ["operations_automation"],
+  },
   ai_video_telematics: {
-    label: "AI-Driven Video Telematics",
+    label: "Improve driver and road safety",
     minimumFamily: "invisionplus" as PlanFamily,
     requires: ["ai_driven_video_telematics"],
   },
@@ -91,7 +88,7 @@ export const PRODUCTS = {
     name: "InCert",
     line: "ais",
     purchase: "buy" as const,
-    price: 8425.2,
+    price: 7140,
   },
   "insight-ais-140": {
     sku: "insight-ais-140",
@@ -99,23 +96,23 @@ export const PRODUCTS = {
     name: "InSight",
     line: "ais",
     purchase: "buy" as const,
-    price: 13310.4,
+    price: 11280,
   },
   "ingenious-ais-140": {
     sku: "ingenious-ais-140",
     family: "ingenious" as PlanFamily,
     name: "InGenious",
     line: "ais",
-    purchase: "quote" as const,
-    price: 25700.4,
+    purchase: "buy" as const,
+    price: 21780,
   },
   "invision-plus-ais-140": {
     sku: "invision-plus-ais-140",
     family: "invisionplus" as PlanFamily,
     name: "InVision+",
     line: "ais",
-    purchase: "quote" as const,
-    price: 67708.4,
+    purchase: "buy" as const,
+    price: 57380,
   },
   "incert-standard": {
     sku: "incert-standard",
@@ -123,7 +120,7 @@ export const PRODUCTS = {
     name: "InCert",
     line: "standard",
     purchase: "buy" as const,
-    price: 7858.8,
+    price: 6660,
   },
   "insight-standard": {
     sku: "insight-standard",
@@ -131,38 +128,36 @@ export const PRODUCTS = {
     name: "InSight",
     line: "standard",
     purchase: "buy" as const,
-    price: 12460.8,
+    price: 10560,
   },
   "ingenious-standard": {
     sku: "ingenious-standard",
     family: "ingenious" as PlanFamily,
     name: "InGenious",
     line: "standard",
-    purchase: "quote" as const,
-    price: 23128,
+    purchase: "buy" as const,
+    price: 19600,
   },
   "invision-plus-standard": {
     sku: "invision-plus-standard",
     family: "invisionplus" as PlanFamily,
     name: "InVision+",
     line: "standard",
-    purchase: "quote" as const,
-    price: 60416,
-  },
-  "invision-standard": {
-    sku: "invision-standard",
-    family: "invision" as PlanFamily,
-    name: "InVision",
-    line: "standard",
-    purchase: "quote" as const,
-    price: 55224,
+    purchase: "buy" as const,
+    price: 51200,
   },
 } as const;
 
 export type Product = (typeof PRODUCTS)[keyof typeof PRODUCTS];
 
+export type PlanBadgeKind =
+  | "BEST_VALUE"
+  | "CLOSEST_MATCH"
+  | "FITS_NEEDS"
+  | "PARTIAL_MATCH"
+  | "COMPATIBLE";
+
 export function cumulativeCapabilities(family: PlanFamily): string[] {
-  if (family === "invision") return [...CAPABILITIES.invision];
   const rank = FAMILY_RANK[family];
   if (rank === undefined) return [];
   const out: string[] = [];
@@ -176,7 +171,6 @@ export function productFor(
   family: PlanFamily,
   aisRequired: boolean
 ): Product | null {
-  if (family === "invision") return aisRequired ? null : PRODUCTS["invision-standard"];
   const suffix = aisRequired ? "ais-140" : "standard";
   const prefix = family === "invisionplus" ? "invision-plus" : family;
   return PRODUCTS[`${prefix}-${suffix}` as keyof typeof PRODUCTS] ?? null;
@@ -189,6 +183,18 @@ export function normalizeNeeds(needs: string[]): NeedKey[] {
     seen.add(key as NeedKey);
     return true;
   });
+}
+
+export function needOutcomes(needs: string[]) {
+  const pending = new Set(normalizeNeeds(needs));
+  const outcomes: { key: string; members: NeedKey[] }[] = [];
+  if (pending.has("fuel_def") && pending.has("repair_help")) {
+    outcomes.push({ key: "fuel_package", members: ["fuel_def", "repair_help"] });
+    pending.delete("fuel_def");
+    pending.delete("repair_help");
+  }
+  pending.forEach((key) => outcomes.push({ key, members: [key] }));
+  return outcomes;
 }
 
 export function aisCoverageStatus(stateId: string) {
@@ -268,6 +274,13 @@ function evaluateFamily(family: PlanFamily, needs: NeedKey[] = []) {
     )
   );
   const unmetNeeds = normalized.filter((key) => !matchedNeeds.includes(key));
+  const outcomes = needOutcomes(normalized);
+  const matchedOutcomes = outcomes
+    .filter((outcome) => outcome.members.every((key) => matchedNeeds.includes(key)))
+    .map((outcome) => outcome.key);
+  const unmetOutcomes = outcomes
+    .filter((outcome) => !matchedOutcomes.includes(outcome.key))
+    .map((outcome) => outcome.key);
   return {
     family,
     rank,
@@ -275,6 +288,8 @@ function evaluateFamily(family: PlanFamily, needs: NeedKey[] = []) {
     capabilities,
     matchedNeeds,
     unmetNeeds,
+    matchedOutcomes,
+    unmetOutcomes,
     completeMatch: normalized.length > 0 && unmetNeeds.length === 0,
   };
 }
@@ -282,7 +297,9 @@ function evaluateFamily(family: PlanFamily, needs: NeedKey[] = []) {
 function rankEligibleFamilies(eligibleFamilies: PlanFamily[], needs: NeedKey[]) {
   const normalized = normalizeNeeds(needs);
   const valid = [...new Set(eligibleFamilies)].filter((f) => FAMILY_RANK[f] !== undefined);
-  const evaluations = valid.map((f) => evaluateFamily(f, normalized));
+  const evaluations = valid
+    .map((f) => evaluateFamily(f, normalized))
+    .sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0));
 
   if (!evaluations.length) {
     return {
@@ -290,6 +307,8 @@ function rankEligibleFamilies(eligibleFamilies: PlanFamily[], needs: NeedKey[]) 
       recommendationFamily: null as PlanFamily | null,
       mostCompatibleFamily: null as PlanFamily | null,
       bestValueFamily: null as PlanFamily | null,
+      closestMatchFamily: null as PlanFamily | null,
+      defaultFamily: null as PlanFamily | null,
       broadestCompatibleFamily: null as PlanFamily | null,
       needsFullyMet: normalized.length === 0,
       supportedNeeds: [] as NeedKey[],
@@ -297,37 +316,59 @@ function rankEligibleFamilies(eligibleFamilies: PlanFamily[], needs: NeedKey[]) 
     };
   }
 
-  const broadest = [...evaluations].sort((a, b) => (b.rank ?? 0) - (a.rank ?? 0))[0];
+  const lowest = evaluations[0];
+  const broadest = evaluations[evaluations.length - 1];
   const completeMatches = normalized.length
-    ? evaluations.filter((ev) => ev.completeMatch).sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0))
+    ? evaluations.filter((ev) => ev.completeMatch)
     : [];
-  const recommendation = normalized.length ? completeMatches[0] || null : broadest;
+  const bestValue = completeMatches[0] || null;
 
+  let closestMatch: (typeof evaluations)[number] | null = null;
+  if (normalized.length && !bestValue) {
+    const maxMatched = Math.max(...evaluations.map((ev) => ev.matchedOutcomes.length));
+    if (maxMatched > 0) {
+      closestMatch = evaluations.find((ev) => ev.matchedOutcomes.length === maxMatched) || null;
+    }
+  }
+
+  const recommendation = bestValue || closestMatch || null;
+  const defaultFamily = (recommendation || lowest)?.family || null;
   const supportedNeeds = normalized.filter((key) =>
     evaluations.some((ev) => ev.matchedNeeds.includes(key))
   );
   const unsupportedNeeds = normalized.filter((key) => !supportedNeeds.includes(key));
 
-  const recommendations = evaluations
-    .sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0))
-    .map((ev) => {
-      const isRecommendation = Boolean(recommendation && ev.family === recommendation.family);
-      return {
-        ...ev,
-        mostCompatible: isRecommendation,
-        bestValue: isRecommendation,
-        compatible: true,
-        badges: isRecommendation ? (["BEST_VALUE"] as const) : (["COMPATIBLE"] as const),
-      };
-    });
+  const recommendations = evaluations.map((ev) => {
+    const isBest = Boolean(bestValue && ev.family === bestValue.family);
+    const isClosest = Boolean(!bestValue && closestMatch && ev.family === closestMatch.family);
+    const badges: PlanBadgeKind[] = isBest
+      ? ["BEST_VALUE"]
+      : isClosest
+        ? ["CLOSEST_MATCH"]
+        : normalized.length
+          ? ev.completeMatch
+            ? ["FITS_NEEDS"]
+            : ["PARTIAL_MATCH"]
+          : ["COMPATIBLE"];
+    return {
+      ...ev,
+      mostCompatible: isBest || isClosest,
+      bestValue: isBest,
+      closestMatch: isClosest,
+      compatible: true,
+      badges,
+    };
+  });
 
   return {
     recommendations,
     recommendationFamily: recommendation?.family ?? null,
     mostCompatibleFamily: recommendation?.family ?? null,
-    bestValueFamily: recommendation?.family ?? null,
+    bestValueFamily: bestValue?.family ?? null,
+    closestMatchFamily: closestMatch?.family ?? null,
+    defaultFamily,
     broadestCompatibleFamily: broadest?.family ?? null,
-    needsFullyMet: normalized.length === 0 || Boolean(recommendation),
+    needsFullyMet: normalized.length === 0 || Boolean(bestValue),
     supportedNeeds,
     unsupportedNeeds,
   };
@@ -358,11 +399,11 @@ export function recommendGroup(input: Record<string, unknown>) {
   }
 
   const ranked = rankEligibleFamilies(eligibility.eligibleFamilies, group.needs);
-  let recommendationFamily = ranked.recommendationFamily;
-  let needsFullyMet = ranked.needsFullyMet;
-  let supportedNeeds = [...ranked.supportedNeeds];
-  let unsupportedNeeds = [...ranked.unsupportedNeeds];
-  let recommendations = ranked.recommendations.map((rec) => {
+  const recommendationFamily = ranked.recommendationFamily;
+  const needsFullyMet = ranked.needsFullyMet;
+  const supportedNeeds = [...ranked.supportedNeeds];
+  const unsupportedNeeds = [...ranked.unsupportedNeeds];
+  const recommendations = ranked.recommendations.map((rec) => {
     const product = productFor(rec.family, group.aisRequired);
     return {
       ...rec,
@@ -372,39 +413,6 @@ export function recommendGroup(input: Record<string, unknown>) {
       action: product?.purchase === "buy" ? ("ADD_TO_CART" as const) : ("GET_A_QUOTE" as const),
     };
   });
-
-  if (!group.aisRequired && group.needs.includes("ai_video_telematics")) {
-    const evaluation = evaluateFamily("invision", group.needs);
-    const product = PRODUCTS["invision-standard"];
-    const cameraOnly = {
-      ...evaluation,
-      mostCompatible: false,
-      bestValue: false,
-      compatible: true,
-      standalone: true,
-      badges: ["COMPATIBLE"] as const,
-      product,
-      sku: product.sku,
-      purchase: product.purchase,
-      action: "GET_A_QUOTE" as const,
-    };
-    recommendations.push(cameraOnly);
-    if (!supportedNeeds.includes("ai_video_telematics")) {
-      supportedNeeds.push("ai_video_telematics");
-    }
-    unsupportedNeeds = group.needs.filter((key) => !supportedNeeds.includes(key as NeedKey));
-
-    if (group.needs.length === 1) {
-      recommendations = recommendations.map((rec) => ({
-        ...rec,
-        mostCompatible: rec.family === "invision",
-        bestValue: rec.family === "invision",
-        badges: rec.family === "invision" ? (["BEST_VALUE"] as const) : (["COMPATIBLE"] as const),
-      }));
-      recommendationFamily = "invision";
-      needsFullyMet = true;
-    }
-  }
 
   const manufacturer = resolveOem(group.segment, group.make);
   const segmentLabel = vehicleData[group.segment]?.label || group.segment;
@@ -438,7 +446,9 @@ export function recommendGroup(input: Record<string, unknown>) {
             : ("READY" as const),
     recommendationFamily,
     mostCompatibleFamily: recommendationFamily,
-    bestValueFamily: recommendationFamily,
+    bestValueFamily: ranked.bestValueFamily,
+    closestMatchFamily: ranked.closestMatchFamily,
+    defaultFamily: ranked.defaultFamily,
     broadestCompatibleFamily: ranked.broadestCompatibleFamily,
     needsFullyMet,
     supportedNeeds,

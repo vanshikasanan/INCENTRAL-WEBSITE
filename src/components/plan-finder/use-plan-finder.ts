@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { normalizeConfiguredLine } from "@/lib/commerce/installation";
+
 import {
   CONFIGURATOR_STORAGE_KEY,
   MODAL_CONFIGURATOR_STORAGE_KEY,
@@ -21,6 +23,8 @@ import {
   vehicleData,
   INDIA_REGIONS,
   addToConfiguredCart,
+  getConfiguredCart,
+  MAX_DIRECT_QTY,
   saveQuoteContext,
   type RecommendationResult,
 } from "@/lib/plan-finder";
@@ -31,7 +35,7 @@ const defaultState: ConfiguratorState = {
   segment: "3w",
   make: "",
   emission: "",
-  aisRequired: false,
+  aisRequired: true,
   stateId: "",
   selectedFamily: "",
   quantity: 1,
@@ -43,9 +47,11 @@ function restoreSelectedNeeds(expanded: string[]): string[] {
   if (expanded.includes("tracking")) selected.push("tracking");
   if (expanded.includes("predictive_health")) selected.push("predictive_health");
   if (expanded.includes("ai_video_telematics")) selected.push("ai_video_telematics");
-  if (expanded.includes("fuel_def") && expanded.includes("diagnostics")) {
+  if (expanded.includes("fuel_def") && expanded.includes("repair_help")) {
     selected.push("fuel_package");
   }
+  if (expanded.includes("driver_behaviour")) selected.push("driver_behaviour");
+  if (expanded.includes("fleet_automation")) selected.push("fleet_automation");
   return selected;
 }
 
@@ -156,7 +162,10 @@ export function usePlanFinder({ variant = "section", onAddedToCart }: UsePlanFin
       return;
     }
     const family =
-      result.recommendationFamily || result.recommendations[0]?.family || "";
+      result.defaultFamily ||
+      result.recommendationFamily ||
+      result.recommendations[0]?.family ||
+      "";
     if (family) {
       setState((prev) => ({ ...prev, selectedFamily: family as PlanFamily }));
     }
@@ -200,7 +209,7 @@ export function usePlanFinder({ variant = "section", onAddedToCart }: UsePlanFin
   }, [result, state.aisRequired]);
 
   const highlightedFamily = useCallback((rec: RecommendationResult) => {
-    return rec.recommendationFamily || rec.bestValueFamily || "";
+    return rec.bestValueFamily || rec.closestMatchFamily || rec.recommendationFamily || "";
   }, []);
 
   const selectedRecommendation = useMemo(() => {
@@ -228,12 +237,12 @@ export function usePlanFinder({ variant = "section", onAddedToCart }: UsePlanFin
         : "This is the only plan that fits these vehicle details.";
     }
     if (hasNeeds && hasFullNeedsMatch) {
-      return "All plans shown fit your vehicle. Best Value is the lowest compatible plan that covers everything you selected.";
+      return "All plans shown fit your vehicle. Recommended is the lowest compatible plan that covers everything you selected.";
     }
     if (hasNeeds) {
       return "These plans fit your vehicle, but none includes everything you selected.";
     }
-    return "All plans shown fit these vehicle details. Best Value has the broadest feature set available.";
+    return "All plans shown fit these vehicle details.";
   }, [result, expandedNeeds]);
 
   const availabilityNotices = useMemo(() => {
@@ -331,7 +340,7 @@ export function usePlanFinder({ variant = "section", onAddedToCart }: UsePlanFin
     }
     setError(null);
     setCartSuccess(null);
-    update({ step: 2, aisRequired: state.aisRequired ?? false });
+    update({ step: 2, aisRequired: state.aisRequired ?? true });
     return true;
   }, [state, update]);
 
@@ -379,10 +388,12 @@ export function usePlanFinder({ variant = "section", onAddedToCart }: UsePlanFin
       total: number,
       recResult: RecommendationResult
     ) => {
-      const best = Boolean(
-        highlightedFamily(recResult) && rec.family === highlightedFamily(recResult)
-      );
-      if (best) return { label: "Best Value", variant: "value" as const };
+      if (recResult.bestValueFamily && rec.family === recResult.bestValueFamily) {
+        return { label: "Recommended", variant: "value" as const };
+      }
+      if (recResult.closestMatchFamily && rec.family === recResult.closestMatchFamily) {
+        return { label: "Closest Fit", variant: "match" as const };
+      }
       if (expandedNeeds.length) {
         return {
           label: rec.completeMatch ? "Fits your needs" : "Partial match",
@@ -392,7 +403,7 @@ export function usePlanFinder({ variant = "section", onAddedToCart }: UsePlanFin
       if (total <= 1) return null;
       return { label: "Compatible", variant: "match" as const };
     },
-    [expandedNeeds, highlightedFamily]
+    [expandedNeeds]
   );
 
   const purchaseSelected = useCallback(() => {
@@ -431,7 +442,7 @@ export function usePlanFinder({ variant = "section", onAddedToCart }: UsePlanFin
     };
 
     if (product.purchase === "buy") {
-      addToConfiguredCart(line);
+      addToConfiguredCart(normalizeConfiguredLine(line));
       setCartSuccess({
         title: `${qty} × ${product.name}`,
         summary: `${result.summary.manufacturerLabel} · ${result.summary.emission} · ${variantLabel(state.aisRequired)}`,
@@ -444,34 +455,17 @@ export function usePlanFinder({ variant = "section", onAddedToCart }: UsePlanFin
     window.location.href = "/get-a-quote?source=homepage-configurator";
   }, [result, selectedRecommendation, state, variant, onAddedToCart]);
 
-  const requestInVisionQuote = useCallback(() => {
-    if (!result || result.status !== "VERIFIED") return;
-    const product = productFor("invision", false);
-    if (!product) return;
-
-    const qty = Math.max(1, state.quantity);
-    saveQuoteContext({
-      id: `cfg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      sku: product.sku,
-      family: "invision",
-      planName: "InVision",
-      line: "Standard",
-      quantity: qty,
-      unitPrice: product.price,
-      segment: state.segment,
-      segmentLabel: result.summary.segmentLabel,
-      make: state.make,
-      manufacturerLabel: result.summary.manufacturerLabel,
-      emission: state.emission,
-      aisRequired: false,
-      stateId: "",
-      stateLabel: "",
-      hardware: planMeta.invision.hardware.standard,
-      source: variant === "modal" ? "modal-configurator" : "homepage-configurator",
-      createdAt: Date.now(),
-    });
-    window.location.href = "/get-a-quote?source=homepage-configurator";
-  }, [result, state, variant]);
+  const quoteThresholdNotice =
+    result?.status === "VERIFIED" && selectedRecommendation
+      ? (() => {
+          const qty = Math.max(1, state.quantity);
+          const cartCount = getConfiguredCart().reduce((sum, item) => sum + item.quantity, 0);
+          const projected = cartCount + qty;
+          return projected > MAX_DIRECT_QTY
+            ? `${projected} devices in cart. Orders above 25 continue as a quote.`
+            : null;
+        })()
+      : null;
 
   return {
     state,
@@ -503,7 +497,7 @@ export function usePlanFinder({ variant = "section", onAddedToCart }: UsePlanFin
     setQuantity,
     getBadge,
     purchaseSelected,
-    requestInVisionQuote,
+    quoteThresholdNotice,
     coverageStatus: () => coverageStatus(state.aisRequired, state.stateId),
     cumulativeCapabilities,
     formatMoney,
