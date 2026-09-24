@@ -16,7 +16,7 @@ export type ProofSectionContent = {
 
 export const proofSectionHome: ProofSectionContent = {
   id: "proof",
-  titleId: "proofTitle",
+  titleId: "h132ProofTitle",
   eyebrow: "Trusted at fleet scale",
   title: "One platform for the fleet decisions that matter.",
   description:

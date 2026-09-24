@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
+import { Eyebrow } from "./eyebrow";
 type SectionHeadProps = {
   eyebrow?: string;
   title: ReactNode;
@@ -46,9 +47,13 @@ export function SectionHead({
     );
 
   const eyebrowNode = eyebrow ? (
-    <p className={cn(isH139 ? "eyebrow" : "mb-2 text-[12px] leading-[1.22] font-semibold tracking-[0.085em] text-[#1767ad] uppercase")}>
-      {eyebrow}
-    </p>
+    isH139 ? (
+      <Eyebrow>{eyebrow}</Eyebrow>
+    ) : (
+      <p className="mb-2 text-[12px] leading-[1.22] font-semibold tracking-[0.085em] text-[#1767ad] uppercase">
+        {eyebrow}
+      </p>
+    )
   ) : null;
 
   if (align === "stack") {

@@ -1,57 +1,52 @@
-import { siteConfig } from "@/config/site";
-
 export const heroContent = {
-  eyebrow: "InCentral by Intangles",
-  title: "Fleet Tracking and Intelligence, Built to Grow With Your Fleet.",
+  eyebrow: "Flexible fleet intelligence",
+  title: "Choose the solution that fits each vehicle's needs.",
   lead:
-    "Track your fleet, monitor fuel and vehicle health, improve driver safety, and add video telematics in one place. Answer a few questions to see which plans fit your fleet.",
+    "With solutions across cabs, three-wheelers, commercial vehicles and buses, Intangles gives you the flexibility to choose different plans for different vehicles based on what each one requires.",
   actions: {
     primary: {
-      label: "Find the right plan",
+      label: "Find the right solution",
       href: "#check-compatibility",
     },
     secondary: {
-      label: "Call us",
-      href: `tel:${siteConfig.phone.raw}`,
+      label: "Explore all solutions",
+      href: "#solutions",
     },
   },
   intelligencePanel: {
-    kicker: "Intangles fleet intelligence",
-    title: "What Intangles brings to your fleet",
-    chip: "Across the plan range",
+    kicker: "Capability range",
+    title: "Choose the capabilities that fit the job.",
+    chip: "Flexible By Need",
     capabilities: [
       {
         id: "health",
         title: "Predictive Vehicle Health Monitoring",
-        accentColor: "#8ea8ff",
+        toneClass: "h140-violet",
       },
       {
         id: "automation",
-        title: "Operations Automation & Fleet Reports",
-        accentColor: "#73bbf3",
-        iconTransform: "translate(0.4px, -0.2px)",
+        title: "Automated Fleet Tasks & Fleet Reports",
+        toneClass: "h140-teal",
       },
       {
         id: "fuel",
         title: "Fuel Consumption & Management",
-        accentColor: "#67c7e7",
+        toneClass: "h140-cyan",
       },
       {
-        id: "dtc",
-        title: "DTC Codes and Guided Repair Strategies",
-        accentColor: "#97b8ff",
-        iconTransform: "translate(0.3px, -0.1px)",
+        id: "fault",
+        title: "Vehicle Fault Codes and Repair Guidance",
+        toneClass: "h140-amber",
       },
       {
         id: "driver",
         title: "Driver Behaviour Monitoring",
-        accentColor: "#78aee8",
+        toneClass: "h140-blue",
       },
       {
         id: "video",
         title: "AI-Driven Video Telematics",
-        accentColor: "#5fa0ea",
-        iconTransform: "translate(0.2px, -0.1px)",
+        toneClass: "h140-green",
       },
     ],
   },

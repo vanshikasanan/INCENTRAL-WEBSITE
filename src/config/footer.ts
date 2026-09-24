@@ -11,7 +11,7 @@ export type FooterNavGroup = {
 
 export const footerSupport = {
   kicker: "24×7 customer support",
-  title: "Need help choosing a plan or managing an order?",
+  title: "Need help choosing a solution or managing an order?",
   phone: {
     label: "Phone support",
     value: "1800-268-9111",

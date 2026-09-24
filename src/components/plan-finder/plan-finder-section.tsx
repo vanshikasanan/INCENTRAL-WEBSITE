@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Container } from "@/components/common/container";
+import { Eyebrow } from "@/components/layout/marketing/eyebrow";
 import { planFinderSection } from "@/config/plan-finder";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
@@ -31,20 +32,29 @@ export function PlanFinderSection({
       <Container>
         <div
           id={copy.id}
-          className="h144-intro scroll-mt-[90px]"
+          className="relative mb-6 grid scroll-mt-[90px] grid-cols-1 items-end gap-2.5 min-[761px]:grid-cols-[minmax(0,1fr)_auto] min-[761px]:gap-8"
         >
           <div>
-            <p className="eyebrow">{copy.eyebrow}</p>
-            <h2 id={copy.titleId}>{copy.title}</h2>
-            <p>{copy.description}</p>
+            <Eyebrow>{copy.eyebrow}</Eyebrow>
+            <h2
+              id={copy.titleId}
+              className="m-0 max-w-[780px] text-balance text-[30px] leading-[1.06] font-normal tracking-[-0.038em] text-[#132d39] min-[421px]:text-[32px] min-[761px]:text-[clamp(30px,2.8vw,42px)]"
+            >
+              {copy.title}
+            </h2>
+            <p className="mt-3 mb-0 max-w-[680px] text-sm leading-[1.55] text-[#627680]">
+              {copy.description}
+            </p>
           </div>
           {showPhone ? (
             <Link
               href={`tel:${siteConfig.phone.raw}`}
-              className="h144-phone"
+              className="flex flex-col items-start py-[11px] text-[#1767ad] no-underline min-[761px]:items-end"
             >
-              <span>{copy.phoneLabel}</span>
-              <strong>{copy.phoneCta}</strong>
+              <span className="text-xs text-[#7b8b93]">{copy.phoneLabel}</span>
+              <strong className="mt-1 text-[15px] font-semibold">
+                {copy.phoneCta}
+              </strong>
             </Link>
           ) : null}
         </div>
