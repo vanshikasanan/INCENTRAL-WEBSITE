@@ -10,6 +10,7 @@ import { NavLink } from "@/components/common/nav-link";
 import { headerActions, primaryNavLinks } from "@/config/navigation";
 import { siteConfig } from "@/config/site";
 import { useAuth } from "@/hooks/use-auth";
+import { useConfiguredCart } from "@/hooks/use-configured-cart";
 import { getHeaderAccountLink } from "@/lib/auth/nav-links";
 import { isNavLinkActive } from "@/lib/navigation-utils";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,7 @@ export function SiteHeader() {
   const desktopMegaBreakpoint = 1041;
   const pathname = usePathname();
   const { isAuthenticated } = useAuth();
+  const { deviceCount } = useConfiguredCart();
   const accountLink = getHeaderAccountLink(isAuthenticated);
   const plansMenuId = useId();
   const mobileMenuId = useId();
@@ -98,7 +100,14 @@ export function SiteHeader() {
       data-inc-header
       className="sticky top-0 z-[1000] h-[var(--spacing-header-mobile)] overflow-visible border-b border-inc-header-border bg-white/[0.985] shadow-[0_1px_0_rgba(17,25,29,0.02)] backdrop-blur-[16px] min-[1100px]:h-[var(--spacing-header)]"
     >
-      <div className="inc-header-shell grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 max-[390px]:gap-1 min-[1100px]:grid-cols-[auto_minmax(0,1fr)_auto] min-[1100px]:gap-[26px]">
+      <div
+        className={cn(
+          "mx-auto h-full w-[calc(100%-24px)] max-[390px]:w-[calc(100%-16px)]",
+          "min-[761px]:max-[1100px]:w-[min(calc(100%-64px),1320px)]",
+          "min-[1101px]:w-[min(calc(100%-96px),1320px)]",
+          "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 max-[390px]:gap-1 min-[1100px]:grid-cols-[auto_minmax(0,1fr)_auto] min-[1100px]:gap-[26px]"
+        )}
+      >
         <Logo />
 
         <nav
@@ -126,23 +135,31 @@ export function SiteHeader() {
                 data-inc-plans-trigger
                 data-nav="plans"
                 data-active={plansOpen ? "true" : "false"}
-                onClick={() => setPlansOpen((current) => !current)}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setPlansOpen((current) => !current);
+                }}
                 className={cn(
                   "inc-nav-underline relative flex min-h-12 cursor-pointer items-center gap-1.5 border-0 bg-transparent px-0.5 text-[15px] font-medium whitespace-nowrap text-inc-nav transition-colors duration-200",
                   "hover:text-inc-nav-hover focus-visible:text-inc-nav-hover",
                   plansOpen && "text-inc-nav-hover"
                 )}
               >
-                Plans
+                Solutions
                 <ChevronDown
                   className={cn(
                     "size-[13px] stroke-[1.7] transition-transform duration-[180ms]",
-                    plansOpen && "rotate-180"
+                    plansOpen && "-scale-y-100"
                   )}
                   aria-hidden="true"
                 />
               </button>
-              <PlansMegaMenu open={plansOpen} menuId={plansMenuId} />
+              <PlansMegaMenu
+                open={plansOpen}
+                menuId={plansMenuId}
+                onMouseEnter={openPlansMenu}
+                onMouseLeave={scheduleClosePlansMenu}
+              />
             </li>
 
             {primaryNavLinks.map((link) => (
@@ -177,10 +194,10 @@ export function SiteHeader() {
             <ShoppingCart className="size-5 stroke-[1.8]" />
             <span
               data-inc-cart-count
-              hidden
+              hidden={deviceCount < 1}
               className="absolute -top-1.5 -right-1.5 h-6 min-w-6 rounded-full border-2 border-white bg-[#0b65c8] px-1.5 text-center text-[15px] leading-5 font-semibold text-white tabular-nums"
             >
-              0
+              {deviceCount}
             </span>
           </Link>
 

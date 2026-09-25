@@ -1,0 +1,11 @@
+---
+description: Styling — Tailwind + shadcn on components; only globals.css for CSS
+alwaysApply: true
+---
+
+# Styling (INCENTRAL-WEBSITE)
+
+- **Only CSS file:** `src/app/globals.css` (Tailwind `@import`, `@theme`, shared v375 component classes). Do **not** add files under `src/styles/` or other `.css` imports.
+- **Components:** Prefer **Tailwind utilities** and **shadcn/ui** (`@/components/ui/*`) with `cn()` for new UI.
+- **Legacy class hooks** (e.g. `h139-card`, `h132-hero`) may stay in `globals.css` `@layer components` until migrated to Tailwind.
+- Dynamic plan accents: use `planAccentTokens` / inline `style` when utilities cannot express per-card colors.

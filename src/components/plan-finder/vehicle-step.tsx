@@ -86,7 +86,7 @@ export function VehicleStep({ finder }: VehicleStepProps) {
         <div
           role="group"
           aria-label={copy.needsGroupLabel}
-          className="relative z-[1] mt-6 grid grid-cols-4 gap-3.5 max-[980px]:grid-cols-2 max-[680px]:mt-[18px] max-[680px]:grid-cols-1 max-[680px]:gap-2.5"
+          className="relative z-[1] mt-6 grid grid-cols-3 gap-3.5 max-[980px]:grid-cols-2 max-[680px]:mt-[18px] max-[680px]:grid-cols-1 max-[680px]:gap-2.5"
         >
           {needOptions.map((option) => (
             <NeedOption

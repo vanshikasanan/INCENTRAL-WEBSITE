@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 
 import { AuthPage } from "@/components/auth";
+import { Container } from "@/components/common/container";
 import { authPage } from "@/config/auth";
 import { constructMetadata } from "@/lib/metadata";
 
@@ -14,9 +15,9 @@ export const metadata = constructMetadata({
 function AuthPageFallback() {
   return (
     <main id="main" className="auth-page">
-      <div className="inc-shell py-20 text-center text-sm text-[#64757e]">
+      <Container className="py-20 text-center text-sm text-[#64757e]">
         Loading sign in…
-      </div>
+      </Container>
     </main>
   );
 }

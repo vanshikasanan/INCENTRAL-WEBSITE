@@ -17,6 +17,7 @@ export default function HomePage() {
         title={plans.title}
         description={plans.description}
         cards={plans.cards}
+        gridLabel={plans.gridLabel}
       />
       <PlanFinderSection />
       <ProofSection {...proofSectionHome} />

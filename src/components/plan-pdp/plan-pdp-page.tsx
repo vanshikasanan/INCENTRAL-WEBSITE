@@ -7,7 +7,7 @@ import {
   plansMega,
   type PlanRouteId,
 } from "@/config/plans";
-import { planMeta, variantLabel } from "@/lib/plan-finder/plan-meta";
+import { planMeta, planValueLabel, variantLabel } from "@/lib/plan-finder/plan-meta";
 import { planRouteToFamily } from "@/lib/plans/plan-route-map";
 
 import { PlanHighlightsSection } from "./plan-highlights-section";
@@ -27,11 +27,9 @@ const planBestFor: Record<PlanRouteId, string> = {
     "Operators ready for predictive vehicle health, fuel management and fleet automation.",
   "invision-plus":
     "Fleets that need video safety alongside tracking, fuel and predictive health capabilities.",
-  invision:
-    "Operators that need camera-only AI-Driven Video Telematics without OBD-dependent layers.",
 };
 
-export function PlanPdpPage({ planId, line = "standard" }: PlanPdpPageProps) {
+export function PlanPdpPage({ planId, line = "ais" }: PlanPdpPageProps) {
   const product = getPlanProductById(planId);
   const showcase = getPlanShowcaseCardById(planId);
   const family = planRouteToFamily(planId);
@@ -49,7 +47,7 @@ export function PlanPdpPage({ planId, line = "standard" }: PlanPdpPageProps) {
       <PlanPdpHero
         accent={product.accent}
         lineLabel={lineLabel}
-        valueLabel={meta.value}
+        valueLabel={planValueLabel(family, resolvedLine === "ais")}
         name={meta.name}
         tagline={showcase.tagline}
         summary={meta.desc}

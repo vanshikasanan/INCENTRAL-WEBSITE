@@ -14,7 +14,11 @@ type PlanLineToggleProps = {
 export function PlanLineToggle({ product }: PlanLineToggleProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const activeLine = searchParams.get("line") || product.variants[0]?.href.split("line=")[1] || "standard";
+  const defaultLine =
+    product.variants.find((v) => v.href.includes("line=ais"))?.href.includes("line=ais")
+      ? "ais"
+      : "standard";
+  const activeLine = searchParams.get("line") || defaultLine;
 
   if (product.variants.length <= 1) return null;
 

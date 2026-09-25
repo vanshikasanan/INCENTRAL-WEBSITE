@@ -1,3 +1,5 @@
+import { clearAuthSession, readAuthSession } from './auth/session';
+
 const BASE = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
 
 export async function apiFetch(path, options = {}) {
@@ -7,7 +9,14 @@ export async function apiFetch(path, options = {}) {
     headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
   });
   const data = await res.json().catch(() => null);
-  if (!res.ok) throw Object.assign(new Error(data?.error || `HTTP ${res.status}`), { status: res.status, data });
+  if (!res.ok) {
+    // Expired session detected from a protected endpoint — clear local state and redirect
+    if (res.status === 401 && !path.startsWith('/auth/') && typeof window !== 'undefined' && readAuthSession()) {
+      clearAuthSession();
+      window.location.href = '/sign-in?expired=1';
+    }
+    throw Object.assign(new Error(data?.error || `HTTP ${res.status}`), { status: res.status, data });
+  }
   return data;
 }
 

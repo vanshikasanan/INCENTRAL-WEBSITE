@@ -39,6 +39,23 @@ function NeedIcon({ kind }: { kind: NeedOptionConfig["kind"] }) {
           <path d="m16 10 5-2.5v9L16 14" fill="none" stroke="currentColor" strokeWidth="1.8" />
         </svg>
       );
+    case "driver":
+      return (
+        <svg aria-hidden="true" viewBox="0 0 24 24" className="size-6">
+          <circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" strokeWidth="1.8" />
+          <path d="M6 12h12M12 6v6" fill="none" stroke="currentColor" strokeWidth="1.8" />
+          <path d="M8.5 15.5 12 12l3.5 3.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
+        </svg>
+      );
+    case "operations":
+      return (
+        <svg aria-hidden="true" viewBox="0 0 24 24" className="size-6">
+          <path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" strokeWidth="1.8" />
+          <circle cx="9" cy="7" r="2" fill="none" stroke="currentColor" strokeWidth="1.8" />
+          <circle cx="15" cy="12" r="2" fill="none" stroke="currentColor" strokeWidth="1.8" />
+          <circle cx="11" cy="17" r="2" fill="none" stroke="currentColor" strokeWidth="1.8" />
+        </svg>
+      );
   }
 }
 
@@ -61,7 +78,9 @@ export function NeedOption({ option, checked, onChange }: NeedOptionProps) {
         option.kind === "fuel" && "[--need-accent:#09979c] [--need-icon-bg:#eaf8f7]",
         option.kind === "health" && "[--need-accent:#6843bd] [--need-icon-bg:#f3eefc]",
         option.kind === "video" && "[--need-accent:#dc8103] [--need-icon-bg:#fff5e7]",
-        option.kind === "tracking" && "[--need-accent:#1268cd] [--need-icon-bg:#edf4ff]"
+        option.kind === "tracking" && "[--need-accent:#1268cd] [--need-icon-bg:#edf4ff]",
+        option.kind === "driver" && "[--need-accent:#6843bd] [--need-icon-bg:#f3eefc]",
+        option.kind === "operations" && "[--need-accent:#2764d8] [--need-icon-bg:#eef3fd]"
       )}
     >
       <input

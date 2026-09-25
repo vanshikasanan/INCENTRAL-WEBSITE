@@ -23,8 +23,9 @@ export const siteConfig = {
     ],
     gstin: "27AADCI7688G1Z3",
   },
+  parentBrandUrl: "https://www.intangles.ai/",
   assets: {
     favicon: "/images/brand/favicon.png",
-    logo: "/images/brand/intangles-logo-grey-horizontal.png",
+    logoWhite: "/images/brand/intangles-logo-white-horizontal.png",
   },
 } as const;

@@ -1,16 +1,12 @@
-export type PlanFamily =
-  | "incert"
-  | "insight"
-  | "ingenious"
-  | "invisionplus"
-  | "invision";
+export type PlanFamily = "incert" | "insight" | "ingenious" | "invisionplus";
 
 export type NeedKey =
   | "tracking"
   | "fuel_def"
-  | "diagnostics"
+  | "repair_help"
   | "predictive_health"
   | "driver_behaviour"
+  | "fleet_automation"
   | "ai_video_telematics";
 
 export type ConfiguratorState = {
@@ -47,4 +43,8 @@ export type CartLine = {
   createdAt: number;
   purchase?: "buy" | "quote";
   configurationVersion?: number;
+  installationMethod?: "self" | "intangles";
+  installationLabel?: string;
+  installationFeeExGst?: number;
+  installationRequired?: boolean;
 };

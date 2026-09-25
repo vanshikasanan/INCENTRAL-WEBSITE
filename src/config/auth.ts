@@ -50,7 +50,7 @@ export const authPage = {
     message: "Your cart is saved.",
     detail: "Sign in or create an account to continue to checkout.",
     backLabel: "Back to Cart",
-    cartHref: "/",
+    cartHref: "/cart",
   },
   messages: {
     passwordMismatch: "The passwords do not match.",

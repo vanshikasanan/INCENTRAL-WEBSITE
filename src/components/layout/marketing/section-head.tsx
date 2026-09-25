@@ -2,12 +2,15 @@ import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
+import { Eyebrow } from "./eyebrow";
 type SectionHeadProps = {
   eyebrow?: string;
   title: ReactNode;
   titleId?: string;
   description?: ReactNode;
   align?: "split" | "stack";
+  /** v375 h139-head split layout with portal type scale */
+  variant?: "default" | "h139";
   className?: string;
   titleClassName?: string;
   descriptionClassName?: string;
@@ -19,16 +22,21 @@ export function SectionHead({
   titleId,
   description,
   align = "split",
+  variant = "default",
   className,
   titleClassName,
   descriptionClassName,
 }: SectionHeadProps) {
+  const isH139 = variant === "h139";
+
   const titleNode =
     typeof title === "string" ? (
       <h2
         id={titleId}
         className={cn(
-          "m-0 max-w-[760px] text-[32px] leading-[1.04] font-normal tracking-[-0.038em] text-[#182b35] min-[761px]:text-[clamp(32px,3.1vw,42px)] max-[520px]:text-[31px]",
+          isH139 && "text-balance",
+          !isH139 &&
+            "m-0 max-w-[760px] text-[32px] leading-[1.04] font-normal tracking-[-0.038em] text-[#182b35] min-[761px]:text-[clamp(32px,3.1vw,42px)] max-[520px]:text-[31px]",
           titleClassName
         )}
       >
@@ -38,14 +46,20 @@ export function SectionHead({
       title
     );
 
+  const eyebrowNode = eyebrow ? (
+    isH139 ? (
+      <Eyebrow>{eyebrow}</Eyebrow>
+    ) : (
+      <p className="mb-2 text-[12px] leading-[1.22] font-semibold tracking-[0.085em] text-[#1767ad] uppercase">
+        {eyebrow}
+      </p>
+    )
+  ) : null;
+
   if (align === "stack") {
     return (
       <div className={cn("max-w-[780px]", className)}>
-        {eyebrow ? (
-          <p className="mb-2 text-[12px] leading-[1.22] font-semibold tracking-[0.085em] text-[#1767ad] uppercase">
-            {eyebrow}
-          </p>
-        ) : null}
+        {eyebrowNode}
         {titleNode}
         {description ? (
           <p
@@ -61,6 +75,18 @@ export function SectionHead({
     );
   }
 
+  if (isH139) {
+    return (
+      <div className={cn("h139-head", className)}>
+        <div>
+          {eyebrowNode}
+          {titleNode}
+        </div>
+        {description ? <p className={descriptionClassName}>{description}</p> : null}
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn(
@@ -69,11 +95,7 @@ export function SectionHead({
       )}
     >
       <div>
-        {eyebrow ? (
-          <p className="mb-2 text-[12px] leading-[1.22] font-semibold tracking-[0.085em] text-[#1767ad] uppercase">
-            {eyebrow}
-          </p>
-        ) : null}
+        {eyebrowNode}
         {titleNode}
       </div>
       {description ? (

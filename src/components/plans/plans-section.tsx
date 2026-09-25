@@ -27,19 +27,20 @@ export function PlansSection({
   cards,
   className,
   gridClassName,
-  gridLabel,
+  gridLabel = "Intangles plans",
 }: PlansSectionProps) {
   return (
     <section
       id={id}
       aria-labelledby={titleId}
       className={cn(
-        "scroll-mt-[90px] border-b border-[#e3e9ec] bg-[linear-gradient(180deg,#fff_0%,#f8fafc_100%)] py-12 pb-[52px] max-[520px]:py-10 max-[520px]:pb-11",
+        "h139-plans border-b border-[#e3e9ec] bg-[linear-gradient(180deg,#fff_0%,#f8fafc_100%)]",
         className
       )}
     >
       <Container>
         <SectionHead
+          variant="h139"
           eyebrow={eyebrow}
           title={title}
           titleId={titleId}

@@ -1,7 +1,5 @@
-import Image from "next/image";
 import Link from "next/link";
 
-import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
 
 type LogoProps = {
@@ -12,26 +10,18 @@ export function Logo({ className }: LogoProps) {
   return (
     <Link
       href="/"
-      aria-label="Intangles InCentral home"
+      aria-label="InCentral home, powered by Intangles"
       className={cn(
-        "group inline-flex min-w-max items-center gap-[13px] overflow-hidden text-inc-header-ink no-underline max-[1099px]:gap-2.5 max-[620px]:gap-2 max-[390px]:gap-1.5",
+        "group inline-flex min-w-max flex-col items-start justify-center gap-0.5 py-1 text-inc-header-ink no-underline max-[760px]:gap-px max-[760px]:py-[3px]",
         className
       )}
     >
-      <Image
-        src={siteConfig.assets.logo}
-        alt="Intangles"
-        width={160}
-        height={38}
-        className="block h-[38px] w-auto object-contain max-[1099px]:h-8 max-[620px]:h-[29px] max-[390px]:h-[25px]"
-        priority
-      />
-      <span
-        aria-hidden="true"
-        className="h-[31px] w-px shrink-0 bg-[linear-gradient(180deg,transparent_0%,#cfd7db_18%,#cfd7db_82%,transparent_100%)] transition-[background] duration-[220ms] group-hover:bg-[linear-gradient(180deg,transparent_0%,#69a9eb_18%,#0565cf_82%,transparent_100%)] max-[1099px]:h-[27px] max-[620px]:h-6 max-[390px]:h-[21px]"
-      />
-      <span className="whitespace-nowrap text-xl font-medium tracking-[-0.042em] text-[#182329] max-[1099px]:text-lg max-[620px]:text-[17px] max-[390px]:text-[15px] max-[390px]:tracking-[-0.035em]">
+      <span className="block whitespace-nowrap text-[21px] leading-none font-medium tracking-[-0.043em] text-[#182329] transition-colors group-hover:text-[#0f1b21] max-[760px]:text-lg">
         <span className="font-semibold text-inc-blue">In</span>Central
+      </span>
+      <span className="ml-px block whitespace-nowrap text-[9.5px] leading-[1.15] font-medium tracking-[0.005em] text-[#75848c] transition-colors group-hover:text-[#5f7078] max-[760px]:text-[8.5px] max-[760px]:tracking-normal">
+        Powered by{" "}
+        <span className="font-semibold text-[#56666e]">Intangles</span>
       </span>
     </Link>
   );

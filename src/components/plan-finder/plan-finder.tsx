@@ -74,7 +74,7 @@ export function PlanFinder({
             >
               02
             </b>
-            <span>Plans</span>
+            <span>Solutions</span>
           </span>
         </div>
       ) : null}

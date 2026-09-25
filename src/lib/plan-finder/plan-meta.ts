@@ -22,20 +22,22 @@ export const CAP_LABELS: Record<string, string> = {
 };
 
 export const NEED_ALIASES: Record<string, string[]> = {
-  fuel_package: ["fuel_def", "diagnostics"],
+  fuel_package: ["fuel_def", "repair_help"],
 };
 
 export const NEED_SHORT_LABELS: Record<string, string> = {
-  tracking: "location tracking",
+  tracking: "location tracking and trip management",
   fuel_def: "fuel consumption insights",
-  diagnostics: "repair help",
-  predictive_health: "vehicle health alerts",
-  ai_video_telematics: "video safety",
+  repair_help: "vehicle fault codes and repair guidance",
+  predictive_health: "predictive vehicle health",
+  driver_behaviour: "driver behaviour monitoring",
+  fleet_automation: "fleet operations and automation",
+  ai_video_telematics: "driver and road safety",
 };
 
 export type PlanMeta = {
   name: string;
-  value: string;
+  value: { standard: string; ais: string };
   desc: string;
   art: string;
   key: string[];
@@ -46,60 +48,51 @@ export type PlanMeta = {
 export const planMeta: Record<PlanFamily, PlanMeta> = {
   incert: {
     name: "InCert",
-    value: "Compliance",
+    value: { standard: "Tracking", ais: "Tracking" },
     desc: "Track vehicles, trips and key driver activity.",
     art: "/images/hero/hero-incert-concept.webp",
     key: ["Location, Trips & Geofencing", "Driver Alerts", "Fleet Reports"],
     hardware: { standard: "EdgeEco", ais: "EdgeEco" },
     install: {
       standard: "Self-install or Intangles installation",
-      ais: "RTO-empanelled installation required",
+      ais: "Self-install or Intangles installation",
     },
   },
   insight: {
     name: "InSight",
-    value: "Compliance + Cost",
+    value: { standard: "Fuel & repair", ais: "Fuel & repair" },
     desc: "Add fuel consumption insights, vehicle fault codes and repair guidance.",
     art: "/images/hero/hero-insight-concept.webp",
-    key: ["Fuel Consumption Insights", "Fault-Code Visibility", "Guided Repair"],
+    key: ["Fuel Consumption Insights", "Vehicle Fault Codes", "Repair Guidance"],
     hardware: { standard: "EdgeEco", ais: "EdgeEco" },
     install: {
       standard: "Self-install or Intangles installation",
-      ais: "RTO-empanelled installation required",
+      ais: "Self-install or Intangles installation",
     },
   },
   ingenious: {
     name: "InGenious",
-    value: "Compliance + Cost + Productivity",
+    value: { standard: "Predictive health", ais: "Predictive health" },
     desc: "Add predictive vehicle health, full fuel management and fleet automation.",
     art: "/images/hero/hero-ingenious-concept.webp",
-    key: ["Predictive Vehicle Health", "Full Fuel Management", "Operations Automation"],
+    key: ["Predictive Vehicle Health", "Full Fuel Management", "Automated Fleet Tasks"],
     hardware: { standard: "EdgePrime", ais: "EdgeEco" },
     install: {
       standard: "Self-install or Intangles installation",
-      ais: "RTO-empanelled installation required",
+      ais: "Self-install or Intangles installation",
     },
   },
   invisionplus: {
     name: "InVision+",
-    value: "Compliance + Cost + Productivity + Safety",
+    value: { standard: "Predictive + video", ais: "Predictive + video" },
     desc: "Add AI-Driven Video Telematics to tracking, full fuel management and predictive vehicle health.",
     art: "/images/hero/hero-invisionplus-concept.webp",
     key: ["AI-Driven Video Telematics", "Dual-Camera Visibility", "In-Cabin Alerts"],
     hardware: { standard: "DriveAI", ais: "DriveAI + EdgeEco" },
     install: {
-      standard: "DriveAI installed by Intangles",
-      ais: "DriveAI installed by Intangles; EdgeEco included with AIS-140 Certified",
+      standard: "Professional installation by Intangles",
+      ais: "Professional installation by Intangles; EdgeEco included with AIS-140 Certified",
     },
-  },
-  invision: {
-    name: "InVision",
-    value: "Camera-only",
-    desc: "AI-Driven Video Telematics without the tracking, fuel or predictive vehicle health layers.",
-    art: "/images/hero/hero-invision-concept.webp",
-    key: ["AI-Driven Video Telematics", "Dual-Camera Visibility", "In-Cabin Alerts"],
-    hardware: { standard: "DriveAI" },
-    install: { standard: "DriveAI installed by Intangles" },
   },
 };
 
@@ -113,4 +106,9 @@ export function expandNeeds(rawNeeds: string[]): string[] {
 
 export function variantLabel(aisRequired: boolean) {
   return aisRequired ? "AIS-140 Certified" : "Standard";
+}
+
+export function planValueLabel(family: PlanFamily, aisRequired: boolean) {
+  const meta = planMeta[family];
+  return meta.value[aisRequired ? "ais" : "standard"];
 }

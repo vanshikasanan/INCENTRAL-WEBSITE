@@ -11,7 +11,7 @@ export type FooterNavGroup = {
 
 export const footerSupport = {
   kicker: "24×7 customer support",
-  title: "Need help choosing a plan or managing an order?",
+  title: "Need help choosing a solution or managing an order?",
   phone: {
     label: "Phone support",
     value: "1800-268-9111",
@@ -33,8 +33,9 @@ export const footerNavGroups: FooterNavGroup[] = [
     id: "explore",
     title: "Explore",
     links: [
-      { label: "Find the right plan", href: "/#check-compatibility" },
-      { label: "Plans", href: "/#plans" },
+      { label: "Find the right solution", href: "/#check-compatibility" },
+      { label: "Solutions", href: "/#solutions" },
+      { label: "Compare Solutions", href: "/compare-solutions" },
       { label: "AIS-140 Guide", href: "/ais-140-guide" },
     ],
   },

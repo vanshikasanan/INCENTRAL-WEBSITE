@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -188,6 +189,21 @@ export function SiteFooter() {
 
         <div className="grid items-center gap-9 border-b border-inc-footer-border py-[17px] pb-4 max-[800px]:gap-3.5 max-[800px]:py-4 max-[800px]:pb-[15px] min-[801px]:grid-cols-[minmax(0,1fr)_auto]">
           <section aria-labelledby="incf-company-title" className="incf-company">
+            <a
+              href={siteConfig.parentBrandUrl}
+              aria-label="Visit Intangles website"
+              className="mb-[22px] inline-flex w-max items-center no-underline max-[760px]:mb-[18px]"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              <Image
+                src={siteConfig.assets.logoWhite}
+                alt="Intangles"
+                width={228}
+                height={52}
+                className="block h-[52px] w-auto max-w-[228px] object-contain max-[760px]:h-11 max-[760px]:max-w-[194px]"
+              />
+            </a>
             <p
               id="incf-company-title"
               className="mb-[5px] text-[11.5px] leading-[1.25] font-medium tracking-[0.085em] text-[#8f989f] uppercase"

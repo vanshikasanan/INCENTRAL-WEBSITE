@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { headerActions, primaryNavLinks } from "@/config/navigation";
-import { planAccentTokens, planProducts, plansMega } from "@/config/plans";
+import { planMegaMenuAccentTokens, planProducts, plansMega } from "@/config/plans";
 import { siteConfig } from "@/config/site";
 import { useAuth } from "@/hooks/use-auth";
 import { getHeaderAccountLink } from "@/lib/auth/nav-links";
@@ -42,14 +42,12 @@ export function MobileNavigation({
           <li className="border-b border-[#edf0f1]">
             <details className="group/details">
               <summary className="flex min-h-[57px] cursor-pointer list-none items-center justify-between text-base font-semibold text-[#152129] [&::-webkit-details-marker]:hidden after:text-lg after:font-normal after:text-[#60717a] after:content-['+'] group-open/details:after:content-['−']">
-                Plans
+                Solutions
               </summary>
 
-              <div className="grid gap-[9px] pb-3.5">
+              <div className="inc-mobile-plan-list grid gap-[9px] pb-3.5">
                 {planProducts.map((plan) => {
-                  const tokens = planAccentTokens[plan.accent];
-                  const isCamera = plan.accent === "invision";
-
+                  const tokens = planMegaMenuAccentTokens[plan.accent];
                   return (
                     <div
                       key={plan.id}
@@ -57,8 +55,8 @@ export function MobileNavigation({
                         { "--plan-accent": tokens.accent } as CSSProperties
                       }
                       className={cn(
-                        "relative overflow-hidden rounded-xl border border-[#e1e7ea] bg-[#fafcfd] p-3 before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:bg-[var(--plan-accent)]",
-                        isCamera && "bg-[#f5f8fa]"
+                        "inc-mobile-plan-family relative overflow-hidden rounded-xl border border-[#e1e7ea] bg-[#fafcfd] p-3 before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:bg-[var(--plan-accent)]",
+                        tokens.mobileClass
                       )}
                     >
                       <div className="flex items-baseline justify-between gap-3 max-[560px]:grid max-[560px]:gap-[3px]">
@@ -69,12 +67,7 @@ export function MobileNavigation({
                           {plan.category}
                         </span>
                       </div>
-                      <div
-                        className={cn(
-                          "mt-[9px] flex flex-wrap gap-[7px] max-[560px]:grid max-[560px]:grid-cols-2",
-                          isCamera && "max-[560px]:grid-cols-1"
-                        )}
-                      >
+                      <div className="inc-mobile-variants mt-[9px] flex flex-wrap gap-[7px] max-[560px]:grid max-[560px]:grid-cols-2">
                         {plan.variants.map((variant) => (
                           <Link
                             key={variant.href}
@@ -91,7 +84,7 @@ export function MobileNavigation({
                 })}
               </div>
 
-              <div className="pb-[15px]">
+              <div className="inc-mobile-plan-actions pb-[15px]">
                 <Link
                   href={plansMega.cta.href}
                   onClick={onNavigate}

@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Container } from "@/components/common/container";
+import { Eyebrow } from "@/components/layout/marketing/eyebrow";
 import { planFinderSection } from "@/config/plan-finder";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
@@ -22,7 +23,7 @@ export function PlanFinderSection({
     <section
       aria-labelledby={copy.titleId}
       className={cn(
-        "relative overflow-hidden border-t border-[#e0e8ec] border-b border-[#dce5e9] bg-[linear-gradient(180deg,#f7fafc_0%,#eef4f7_100%)] py-16 pb-[76px]",
+        "h144-checker relative overflow-hidden border-t border-[#e0e8ec] border-b border-[#dce5e9] bg-[linear-gradient(180deg,#f7fafc_0%,#eef4f7_100%)] py-16 pb-[76px]",
         "before:pointer-events-none before:absolute before:top-[30px] before:right-[-170px] before:h-[520px] before:w-[520px] before:rounded-full before:bg-[radial-gradient(circle,rgba(55,146,206,0.14),rgba(55,146,206,0)_68%)] before:content-['']",
         "max-[760px]:py-[46px] max-[760px]:pb-[54px]",
         className
@@ -31,15 +32,13 @@ export function PlanFinderSection({
       <Container>
         <div
           id={copy.id}
-          className="relative mb-6 grid scroll-mt-[90px] grid-cols-[minmax(0,1fr)_auto] items-end gap-8 max-[760px]:grid-cols-1 max-[760px]:gap-2.5"
+          className="relative mb-6 grid scroll-mt-[90px] grid-cols-1 items-end gap-2.5 min-[761px]:grid-cols-[minmax(0,1fr)_auto] min-[761px]:gap-8"
         >
           <div>
-            <p className="mb-2 text-[12px] leading-[1.22] font-semibold tracking-[0.085em] text-inc-blue uppercase">
-              {copy.eyebrow}
-            </p>
+            <Eyebrow>{copy.eyebrow}</Eyebrow>
             <h2
               id={copy.titleId}
-              className="m-0 max-w-[780px] text-[36px] leading-none font-normal tracking-[-0.045em] text-[#132d39] min-[761px]:text-[clamp(36px,3.3vw,50px)]"
+              className="m-0 max-w-[780px] text-balance text-[30px] leading-[1.06] font-normal tracking-[-0.038em] text-[#132d39] min-[421px]:text-[32px] min-[761px]:text-[clamp(30px,2.8vw,42px)]"
             >
               {copy.title}
             </h2>
@@ -50,10 +49,12 @@ export function PlanFinderSection({
           {showPhone ? (
             <Link
               href={`tel:${siteConfig.phone.raw}`}
-              className="flex flex-col items-end py-[11px] text-[#1767ad] no-underline max-[760px]:items-start"
+              className="flex flex-col items-start py-[11px] text-[#1767ad] no-underline min-[761px]:items-end"
             >
               <span className="text-xs text-[#7b8b93]">{copy.phoneLabel}</span>
-              <strong className="mt-1 text-[15px] font-semibold">{copy.phoneCta}</strong>
+              <strong className="mt-1 text-[15px] font-semibold">
+                {copy.phoneCta}
+              </strong>
             </Link>
           ) : null}
         </div>
