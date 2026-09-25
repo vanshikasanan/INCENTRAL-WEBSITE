@@ -1,6 +1,6 @@
 import { clearAuthSession, readAuthSession } from './auth/session';
 
-const BASE = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
+const BASE = '';
 
 export async function apiFetch(path, options = {}) {
   const res = await fetch(`${BASE}/api${path}`, {
